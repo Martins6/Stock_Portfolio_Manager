@@ -1,0 +1,12 @@
+name: Portfolio_Manager
+title: Portfolio_Manager
+username:
+account: adriel-martins
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1962487
+bundleId: 2894784
+url: https://adriel-martins.shinyapps.io/Portfolio_Manager/
+when: 1584549290.20471
+asMultiple: FALSE
+asStatic: FALSE
