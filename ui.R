@@ -1,5 +1,5 @@
 ########################### / HEADER / #################################
-header <- dashboardHeader(title = "Gestão Econométrica")
+header <- dashboardHeader(title = "Shiny Portfolio Management")
 
 ########################## / SIDEBAR / #################################
 sidebar <- dashboardSidebar(
@@ -22,6 +22,7 @@ body <- dashboardBody(
             fluidRow(
               box(width = 12,
                   
+                  p('In this section I will try to explain some of the key statistics of the app.'),
                   p('"Shiny Portfolio Management" was created to help with the more quantitative understanding of stocks'),
                   p('and also apply the most used and modern techniques to stock portfolio. Hope you enjoy!'),
                   p('The app was created by Adriel Martins.')
@@ -34,18 +35,39 @@ body <- dashboardBody(
             
             fluidRow(
               # Portfolio Input
-              box(title = "Your Portfolio", width = 6, solidHeader = TRUE, status = 'primary',
-                  textAreaInput('port_csv', 'Enter in the CSV format here', value = 'Stock,Weight'),
+              box(title = "Your Portfolio", width = 4, solidHeader = TRUE, status = 'primary',
+                  textAreaInput('port_csv', 'Enter in the CSV format here',
+                                value = 'Stock,Weight,\nAAPL,0.25,\nAMZN,0.25,\nTSLA,0.25,\nSQ,0.25,'),
                   #helpText('Or, upload your own CSV below:'),
                   #fileInput('port_csv_upload'),
                   actionButton('go_csv', 'Submit')
               ),
+              
+              # Date
+              box(title = "", width = 2, solidHeader = TRUE,
+                  dateInput('date', 'Since when do you want to analyze your Portfolio?',
+                            value = start_date)
+              ),
+              
               # Display Portfolio on a Datatable
-              box(title = "Datatable", width = 6, solidHeader = TRUE,
+              box(title = "Datatable of Portfolio", width = 6, solidHeader = TRUE,
                   DTOutput('dt.port')
+              )
+            ),
+            
+            fluidRow(
+              # Portfolio's return distribution
+              box(title = "Return Distribution", width = 4, solidHeader = TRUE,
+                  renderPlotly('pie_chart')
+              ),
+              
+              # Return Comparison
+              box(title = "Historical Return Distribution", width = 6, solidHeader = TRUE,
+                  renderPlotly('pie_chart')
               )
               
             )
+            
     )
     # End of the tabitems
   )

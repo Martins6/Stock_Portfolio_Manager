@@ -81,8 +81,6 @@ fluidRow(
   numericInput("rfr", "RFR%", .03, min = 0, max = 1, step = .0002))
 )
 
-
-
 # Submit button
 actionButton("go", "Submit")
 ```
