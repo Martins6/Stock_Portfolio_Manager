@@ -73,15 +73,15 @@ portfolio_returns_cr <- function(prices, stocks, weights){
   pret.stocks <- stocks_calculations %>% 
     select(PRet, Data, name) %>% 
     pivot_wider(names_from = name, values_from = PRet) %>% 
-    mutate(Port = port_pret) %>% 
-    pivot_longer(cols = any_of(c(symbols, 'Port')),
+    mutate(Portfolio = port_pret) %>% 
+    pivot_longer(cols = any_of(c(symbols, 'Portfolio')),
                  names_to = 'Stocks', values_to = 'PRet')
   
   cr.stocks <- stocks_calculations %>% 
     select(CR, Data, name) %>% 
     pivot_wider(names_from = name, values_from = CR) %>% 
-    mutate(Port = port_cr) %>% 
-    pivot_longer(cols = any_of(c(symbols, 'Port')),
+    mutate(Portfolio = port_cr) %>% 
+    pivot_longer(cols = any_of(c(symbols, 'Portfolio')),
                  names_to = 'Stocks', values_to = 'CR')
   
   dt_complete <- right_join(cr.stocks, pret.stocks)

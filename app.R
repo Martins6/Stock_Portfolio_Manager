@@ -1,4 +1,4 @@
-# Title: Portfolio Management App ('Port-M')
+# Title: Shiny Portfolio Management 
 # Author: Adriel Martins
 # Date: 21/19/2020
 
@@ -11,3 +11,4 @@ source('ui.R')
 source('server.R')
 
 shiny::shinyApp(ui, server)
+
