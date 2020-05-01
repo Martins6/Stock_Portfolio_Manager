@@ -38,7 +38,7 @@ body <- dashboardBody(
             # Intro
             fluidRow(
               box(h3('Portfolio Overview'),
-                  p('For a weekly update or the start of a in-depth study.')
+                  p('For a weekly update or the start of a in-depth study.'),
                   )
             ),
             
@@ -52,17 +52,20 @@ body <- dashboardBody(
                                 value = 'Stock,Weight,\nAAPL,0.25,\nAMZN,0.25,\nTSLA,0.25,\nSQ,0.25,'),
                   #helpText('Or, upload your own CSV below:'),
                   #fileInput('port_csv_upload'),
-                  actionButton('go_csv', 'Submit')
               ),
               
               # Date
-              box(title = "", width = 2, solidHeader = TRUE,
+              box(title = "", width = 3, solidHeader = TRUE, #height = '300px',
                   dateInput('date', 'Since when do you want to analyze your Portfolio?',
-                            value = start_date)
+                            value = start_date),
+                  awesomeCheckbox('quick_update', 'Want some quick update?',
+                                  value = F),
+                  uiOutput('quick_update_conf'),
+                  actionButton('go_csv', 'Submit')
               ),
               
               # Display Portfolio on a Datatable
-              box(title = "Portfolio Weights", width = 6, solidHeader = TRUE,
+              box(title = "Portfolio Weights", width = 5, solidHeader = TRUE,
                   plotlyOutput('port_weights')
               )
             ),
@@ -81,6 +84,28 @@ body <- dashboardBody(
                 tabPanel("Prices", plotlyOutput('price_plot')),
                 tabPanel("Cumulative Returns", plotlyOutput('CR_plot'))
               )
+              
+            ),
+            
+            ################## ********************  Percentual Return Distribution #################
+            # Intro
+            fluidRow(
+              box(h3('Percentual Return Distribution'),
+                  p('Understanding the probabilistic properties of the return in our Portfolio through some key statistics.'),
+                  p('For better understanding of the statistics, please checkout the About tab.'),
+                  p('Keep in mind that in this section, the more data we have the better our analysis is.')
+              )
+            ),
+            
+            fluidRow(
+              # Distribution Plot
+              box(title = 'Distribution Plot', width = 6,
+                  plotOutput('dist_plot')
+                  ),
+              # Distribution Key-Statistics
+              box(title = 'Key Statistics', width = 6,
+                  DTOutput('dist_key_stat')
+                  )
               
             ),
             

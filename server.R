@@ -21,6 +21,22 @@ server <- function(input, output) {
     return(res)
   })
   
+  ########################### ********** Date Selected Function #############
+  date_selected <- eventReactive(input$go_csv, {
+    
+    # If the user wants a quick update
+    if(input$quick_update == TRUE){
+      # Choosing the timeframe to analyze
+      if(input$quick_update_selection == '1 Week Ago'){aux_date <- today() - 8}
+      if(input$quick_update_selection == '2 Weeks Ago'){aux_date <- today() - 15}
+      if(input$quick_update_selection == '1 Month Ago'){aux_date <- today() - 31}
+    }else{
+      aux_date <- input$date
+    }
+    
+    return(aux_date)
+  })
+  
   ########################### ********** Prices from the stocks in the portfolio #############
   port.prices <- eventReactive(input$go_csv, {
     
@@ -29,7 +45,7 @@ server <- function(input, output) {
     symbols <- dt.csv$Stocks
     weights <- dt.csv$Weights
     # Start date to analyze
-    aux_date <- input$date
+    aux_date <- date_selected()
     
     prices <- stock_prices(symbols, aux_date)
     
@@ -74,6 +90,18 @@ server <- function(input, output) {
   
   ########################### / OUTPUT / ###########################
   ########################### Portfolio Overview #############
+  ########################### ********** In case of quick updates #############
+  output$quick_update_conf <- renderUI({
+    
+    if(input$quick_update == TRUE){
+      
+    p('In this case, you should refrain from continue the in-depth study.')
+    selectInput('quick_update_selection', 'What time period?', c('1 Week Ago', '2 Weeks Ago', '1 Month'),
+                selected = '1 Week Ago')
+    }
+    
+  })
+  ########################### ********** Portfolio Weights Pie-Chart #############
   output$port_weights <- renderPlotly({
     
     data <- dt_csv()
@@ -91,21 +119,20 @@ server <- function(input, output) {
     
     aux <- port.pret.cr() %>% 
       group_by(Stocks) %>% 
-      summarise(Growth = scales::percent(last(CR))) %>% 
-      dplyr::arrange(Growth)
+      summarise(Growth = (last(CR)) - 1) %>% 
+      dplyr::arrange( desc(Growth) ) 
     
     
     aux %>% 
       mutate(Stocks = factor(Stocks, levels = aux$Stocks)) %>% 
-      rename(Rank = Growth) %>% 
       ggplot() +
-      geom_bar(aes(x = Stocks, y = Rank),
+      geom_bar(aes(x = Stocks, y = Growth),
                stat="identity", width=.5, fill="tomato3") +
+      scale_y_continuous(labels = scales::percent) +
       labs(title="", 
            y = 'Growth',
            caption="source: Yahoo Finance") + 
-      coord_flip() +
-      theme(axis.text.x = element_text(angle=0, vjust=0.6)) 
+      coord_flip()
     
   })
   
@@ -131,6 +158,55 @@ server <- function(input, output) {
     aux <- port.pret.cr() %>% 
       ggplot(aes(x = Data, y = CR)) +
       geom_path(aes(colour = Stocks))
+    
+  })
+  ########################### Percentual Return Distribution ######################
+  ########################### ********** Distribution Plot #############
+  output$dist_plot <- renderPlot({
+    
+    port <- port.pret.cr()
+    
+    # Choosing the optimal bindwidth with Freedman-Diaconis
+    fd <- 2 * IQR(port$PRet) / length(port$PRet)^(1/3)
+    
+    port %>% 
+      ggplot() +
+      geom_histogram(aes(x = PRet), binwidth = fd,
+                     colour = 'darkblue', fill = 'lightblue') +
+      labs(x = 'Returns (%)',
+           y = '')
+      
+    
+  })
+  
+  ########################### ********** Key-Statistics Datatable #############
+  output$dist_key_stat <- renderDT({
+    
+    port <- port.pret.cr() %>% filter(Stocks == 'Portfolio')
+    
+    # Calculating the actual Volatility, VaR and ES through N-GARCH (Normal-GARCH).
+    # Quantile that we wish to consider.
+    p <- 0.05
+    # Just demeaning it, for simplify the calculations.
+    vec <- port$PRet - mean(port$PRet, na.rm = TRUE)
+    # Fitting a GARCH model
+    g = fGarch::garchFit(~garch(1,1), vec,
+                         cond.dist = "norm",
+                         include.mean = FALSE, trace = FALSE)
+    ## Computing what we want from the GARCH
+    Vol <- g %>% fBasics::volatility() %>% dplyr::last()
+    VaR <- Vol * qnorm(p) %>% round(4) 
+    ES <- -(Vol^2) * dnorm(-VaR, sd = Vol) / p 
+    
+    aux <- c(Vol, -VaR, ES) %>% round(4) %>% scales::percent()
+    # Other interesting statistics
+    skew <- PerformanceAnalytics::skewness(port$PRet) %>% round(4) 
+    kurt <- PerformanceAnalytics::kurtosis(port$PRet) %>% round(4) 
+    
+    res <- tibble(Statistic = c('Volatility', 'Value-at-Risk', 'Expected Shortfall', 'Skewness Coef.', 'Kurtosis Coef.'),
+           Value = c(aux, skew, kurt))
+    
+    res %>% datatable()
     
   })
   
