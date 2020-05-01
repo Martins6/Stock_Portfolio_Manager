@@ -53,7 +53,7 @@ server <- function(input, output) {
   })
   ########################### Modified Sharpe Ratio and CAPM ######################
   ########################### ********** Market Index Returns ####################
-  market_index_return <- eventReactive(input$go_sharpe, {
+  market_index_return <- eventReactive(input$go_sharpe_capm, {
     
     symbols <- input$market_index
     # Start date to analyze
@@ -71,13 +71,6 @@ server <- function(input, output) {
     
   })
   
-  ########################### ********** Proability of the ES ####################
-  prob_ES <- eventReactive(input$go_sharpe, {
-    
-    aux <- input$p_ES_sh
-    
-    return(aux)
-  })
   
   ########################### / OUTPUT / ###########################
   ########################### Portfolio Overview #############
@@ -142,32 +135,139 @@ server <- function(input, output) {
   })
   
   ########################### Sharpe Ratio and CAPM ######################
-  ########################### ********** Portfolio versus Market Sharpe Ratio #############
+  ########################### ********** Sharpe Ratio Portfolio versus Market #############
   output$market_portfolio_sr <- renderPlotly({
     
-    market <- market_index_return() 
-    p <- prob_ES()
+    # Choosing the timeframe to analyze
+    if(input$period_to_analyze_sr == '1 Week Ago'){aux_data <- 7}
+    if(input$period_to_analyze_sr == '2 Week Ago'){aux_data <- 15}
+    if(input$period_to_analyze_sr == '1 Month Ago'){aux_data <- 31}
+    if(input$period_to_analyze_sr == 'Whole Period'){aux_data <- NULL}
     
+    
+    # P-Value from the risk-measure: Expected Shortfall
+    p <- 0.05
+    # Market M. Sharpe Ratio
+    market <- market_index_return() %>% drop_na()
+    vec <- market$PRet - mean(market$PRet, na.rm = TRUE)
     # Using GARCH to calculate the Expected Shortfall (ES)
-    g = fGarch::garchFit(~garch(1,1), market$PRet,
-                         cond.dist = "norm", include.mean = FALSE, trace = FALSE)
-    
-    # Computing the white noise from the schock from the GARCH(1,1)
-    # If our model is right it is supposed to
-    # follow the distribution from the 'cond.dist' in garchFit
-    #epsilon.t <- (g@residuals/g@sigma.t)
-    
+    g = fGarch::garchFit(~garch(1,1), vec,
+                         cond.dist = "norm",
+                         include.mean = FALSE, trace = FALSE)
     # # Compute the fitted standard deviation series
     Vol_vec <- g %>% fBasics::volatility()
     VaR_vec <- Vol_vec * qnorm(p)
-    ES_vec <- - (Vol_vec^2) * dnorm(-VaR_vec, sd = Vol_vec) / p
+    ES_vec <- -(Vol_vec^2) * dnorm(-VaR_vec, sd = Vol_vec) / p
     
-    res <- cbind(Vol_vec, VaR_vec, ES_vec) %>% as_tibble() %>% mutate(Index = 1:n())
+    market <- market %>% 
+      mutate(ES = abs(ES_vec),
+             MarketSharpeRatio = PRet/ES)
     
-    res %>% ggplot(aes(x = Index)) + geom_path(aes(y = Vol_vec)) +
-      geom_path(aes(y = VaR_vec)) + geom_path(aes(y = ES_vec))
+    # Portfolio M. Sharpe Ratio
+    port <- port.pret.cr() %>% filter(Stocks == 'Portfolio')
+    vec <- port$PRet - mean(port$PRet, na.rm = TRUE)
+    # Using GARCH to calculate the Expected Shortfall (ES)
+    g = fGarch::garchFit(~garch(1,1), vec,
+                         cond.dist = "norm",
+                         include.mean = FALSE, trace = FALSE)
+    # # Compute the fitted standard deviation series
+    Vol_vec <- g %>% fBasics::volatility()
+    VaR_vec <- Vol_vec * qnorm(p)
+    ES_vec <- -(Vol_vec^2) * dnorm(-VaR_vec, sd = Vol_vec) / p
+    
+    port <- port %>% 
+      mutate(ES = abs(ES_vec),
+             PortSharpeRatio = PRet/ES) %>% 
+      slice()
+    
+    # Plotting both data
+    res <- ggplot() +
+      geom_path(data = port,
+                aes(x = Data, y = PortSharpeRatio), colour = 'red') +
+      geom_path(data = market,
+                aes(x = Data, y = MarketSharpeRatio), colour = 'blue') +
+      labs(title = 'Market vs. Portfolio')
+    res %>% ggplotly()
     
   })
+  
+  ########################### ********** CAPM Plot ################################
+  output$market_portfolio_CAPM <- renderPlotly({
+    
+    port <- port.pret.cr() %>% drop_na() %>% filter(Stocks == 'Portfolio')
+    market <- market_index_return() %>% drop_na()
+
+    aux <- port %>%
+      # Adding the market returns to the portfolio data
+      mutate(M.PRet = market$PRet) %>%
+      # Changing the name of the portfolio returns
+      rename(P.PRet = PRet) %>% 
+      # Choosing just what we want
+      select(P.PRet, M.PRet)
+    
+    # Adjusting the linear regression
+    fit <- lm(aux, formula = P.PRet ~ M.PRet)
+    # Extracting coefficients
+    fit.coef <- coef(fit)
+    
+    # Plotting
+    aux %>% 
+      ggplot(aes(x = M.PRet, y = P.PRet)) +
+      geom_point() +
+      geom_abline(slope = fit.coef[2], intercept = fit.coef[1], colour = 'purple')
+    
+  })
+  
+  ########################### ********** CAPM Beta ################################
+  output$capm_beta <- renderValueBox({
+    
+    port <- port.pret.cr() %>% drop_na() %>% filter(Stocks == 'Portfolio')
+    market <- market_index_return() %>% drop_na()
+    
+    aux <- port %>%
+      # Adding the market returns to the portfolio data
+      mutate(M.PRet = market$PRet) %>%
+      # Changing the name of the portfolio returns
+      rename(P.PRet = PRet) %>% 
+      # Choosing just what we want
+      select(P.PRet, M.PRet)
+    
+    # Adjusting the linear regression
+    fit <- lm(aux, formula = P.PRet ~ M.PRet)
+    # Extracting coefficients
+    fit.coef <- coef(fit)
+    
+    valueBox(round(fit.coef[2], 2),
+             subtitle = 'CAPM Beta',icon = icon('chart-line') )
+    
+  })
+  
+  ########################### ********** CAPM Alpha ################################
+  output$capm_alpha <- renderValueBox({
+    
+    port <- port.pret.cr() %>% drop_na() %>% filter(Stocks == 'Portfolio')
+    market <- market_index_return() %>% drop_na()
+    
+    aux <- port %>%
+      # Adding the market returns to the portfolio data
+      mutate(M.PRet = market$PRet) %>%
+      # Changing the name of the portfolio returns
+      rename(P.PRet = PRet) %>% 
+      # Choosing just what we want
+      select(P.PRet, M.PRet)
+    
+    # Adjusting the linear regression
+    fit <- lm(aux, formula = P.PRet ~ M.PRet)
+    # Extracting coefficients
+    fit.coef <- coef(fit)
+    
+    valueBox(round(fit.coef[1],4),
+             subtitle = 'CAPM Alpha',
+             color = 'maroon',
+             icon = icon('not-equal'))
+    
+  })
+  
  
   # End of the server function 
 }

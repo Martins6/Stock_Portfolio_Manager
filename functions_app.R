@@ -6,11 +6,11 @@ stock_prices <- function(stocks, start.date){
   # Constructing our Adjusted.Close dataframe with each Stock.
   prices <- 
     # Get the data from Yahoo Finance, we will be working the names of the objects
-    getSymbols(symbols, src = 'yahoo', from = start.date,
+    quantmod::getSymbols(symbols, src = 'yahoo', from = start.date,
                auto.assign = TRUE, warnings = FALSE) %>% 
     # Acessing the xts objects throught the vector of names (get) and getting
     # the the Adjusted.Close (Ad) of each object
-    map(~Ad(get(.)))
+    map(~quantmod::Ad(get(.)))
   
   # Collecting the vector of dates from the xts object.
   Data <- prices[[1]] %>% index()

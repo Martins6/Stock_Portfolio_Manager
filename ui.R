@@ -13,7 +13,7 @@ sidebar <- dashboardSidebar(
 ################################### / BODY / ##########################
 body <- dashboardBody(
   tabItems(
-    ##################### ******************** About Section #####################
+    #####################  About Section #####################
     tabItem(tabName = "about",
             
             fluidRow(
@@ -31,10 +31,10 @@ body <- dashboardBody(
                   )
             ),
     ),
-    ##################### ******************** Descriptive Section #####################
+    ##################### Descriptive Section #####################
     tabItem(tabName = "stats",
             
-            ################## Portfolio Overview #################
+            ################## ********************  Portfolio Overview #################
             # Intro
             fluidRow(
               box(h3('Portfolio Overview'),
@@ -84,36 +84,53 @@ body <- dashboardBody(
               
             ),
             
-            ################## Modified Sharpe Ratio and CAPM #################
+            ################## ********************  Modified Sharpe Ratio and CAPM #################
             # Intro
             fluidRow(
               box(h3('Modified Sharpe Ratio and CAPM'),
+                  p('In this section, we wish to compare our Portfolio with the Market, in order to understand how well we are perfoming against the market.'),
                   p('For better understanding of the statistics, please checkout the About tab.'),
                   p('Keep in mind that in this section, the more data we have the better our analysis is.')
-                  )
-            ),
-            
-            fluidRow(
-              # Sharpe Ratio comparison
-              tabBox(
-                width = 10,
-                title = "Comparing Modified Sharpe Ratios",
-                id = "sharpe_ratio",
-                tabPanel("Stocks versus Portfolio", plotlyOutput('stock_portfolio_sr')),
-                tabPanel("Market versus Portfolio", plotlyOutput('market_portfolio_sr'))
-              ),
+                  ),
+              
               # Inputs
-              box(title = '', width = 2, solidHeader = TRUE,
+              box(title = '', width = 4, solidHeader = TRUE,
                   helpText('For more precise results, please use at least one year worth of data.'),
                   textInput('market_index',
                             'Which Market Index (or ETF) do you wish to compare your Portfolio?',
                             value = 'SPY'),
-                  # numericInput('p_ES_sh', label = 'What is the probability (%) of a loss in order to measure risk?',
-                  #              value = 5, min = 1, max = 10),
-                  actionButton('go_sharpe', 'Submit')
+                  actionButton('go_sharpe_capm', 'Submit')
+              )
+            ),
+            
+            fluidRow(
+              # Sharpe Ratio comparison
+              box(title = 'Comparing Modified Sharpe Ratio (Return/Risk)', width = 10,
+                  plotlyOutput('market_portfolio_sr')
+                  ),
+              box(title = '', width = 2,
+                  selectInput('period_to_analyze_sr',
+                              label = 'Since when do you wish to analyze?', 
+                              choices = c('1 Week Ago', '2 Weeks Ago', '1 Month Ago', 'Whole Period'),
+                              selected = '1 Week Ago'
+                              )
                   )
-
+            ),
+            
+            fluidRow(
+              # CAPM 
+              box(title = 'Capital Asset Pricing Model (CAPM)', width = 12,
+                  plotlyOutput('market_portfolio_CAPM')
+              )
+            ),
+            
+            fluidRow(
+              # CAPM Beta 
+              valueBoxOutput('capm_beta', width = 6),
+              # CAPM Alpha
+              valueBoxOutput('capm_alpha', width = 6)
             )
+            
      # End of the Descriptive Section       
     )
     # End of the tabitems

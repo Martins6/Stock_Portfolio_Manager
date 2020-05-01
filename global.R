@@ -8,11 +8,9 @@ library(DT)
 library(tidyverse)
 library(tidyselect)
 library(lubridate)
-library(PerformanceAnalytics)
 ## Plotting
 library(plotly)
 ## Retrieving Data
-library(quantmod)
 
 # Source functions
 source('functions_app.R')
