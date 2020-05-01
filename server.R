@@ -140,7 +140,7 @@ server <- function(input, output) {
     
     # Choosing the timeframe to analyze
     if(input$period_to_analyze_sr == '1 Week Ago'){aux_data <- 7}
-    if(input$period_to_analyze_sr == '2 Week Ago'){aux_data <- 15}
+    if(input$period_to_analyze_sr == '2 Weeks Ago'){aux_data <- 15}
     if(input$period_to_analyze_sr == '1 Month Ago'){aux_data <- 31}
     if(input$period_to_analyze_sr == 'Whole Period'){aux_data <- NULL}
     
@@ -159,10 +159,6 @@ server <- function(input, output) {
     VaR_vec <- Vol_vec * qnorm(p)
     ES_vec <- -(Vol_vec^2) * dnorm(-VaR_vec, sd = Vol_vec) / p
     
-    market <- market %>% 
-      mutate(ES = abs(ES_vec),
-             MarketSharpeRatio = PRet/ES)
-    
     # Portfolio M. Sharpe Ratio
     port <- port.pret.cr() %>% filter(Stocks == 'Portfolio')
     vec <- port$PRet - mean(port$PRet, na.rm = TRUE)
@@ -175,10 +171,27 @@ server <- function(input, output) {
     VaR_vec <- Vol_vec * qnorm(p)
     ES_vec <- -(Vol_vec^2) * dnorm(-VaR_vec, sd = Vol_vec) / p
     
-    port <- port %>% 
-      mutate(ES = abs(ES_vec),
-             PortSharpeRatio = PRet/ES) %>% 
-      slice()
+    # Adjusting the dataframe to time window selected
+    if(!is.null(aux_data)){
+      port <- port %>% 
+        mutate(ES = abs(ES_vec),
+               PortSharpeRatio = round(PRet/ES, 4)) %>% 
+        slice(( n()-aux_data ):n() )
+      
+      market <- market %>% 
+        mutate(ES = abs(ES_vec),
+               MarketSharpeRatio = round(PRet/ES, 4)) %>% 
+        slice(( n()-aux_data ):n() )
+      
+    }else{
+      port <- port %>% 
+        mutate(ES = abs(ES_vec),
+               PortSharpeRatio = round(PRet/ES, 4))
+      
+      market <- market %>% 
+        mutate(ES = abs(ES_vec),
+               MarketSharpeRatio = round(PRet/ES, 4)) 
+    }
     
     # Plotting both data
     res <- ggplot() +
@@ -187,6 +200,7 @@ server <- function(input, output) {
       geom_path(data = market,
                 aes(x = Data, y = MarketSharpeRatio), colour = 'blue') +
       labs(title = 'Market vs. Portfolio')
+      
     res %>% ggplotly()
     
   })

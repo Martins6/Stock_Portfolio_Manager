@@ -112,6 +112,7 @@ body <- dashboardBody(
                   selectInput('period_to_analyze_sr',
                               label = 'Since when do you wish to analyze?', 
                               choices = c('1 Week Ago', '2 Weeks Ago', '1 Month Ago', 'Whole Period'),
+                              multiple = FALSE,
                               selected = '1 Week Ago'
                               )
                   )
