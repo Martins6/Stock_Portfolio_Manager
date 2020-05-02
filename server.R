@@ -550,32 +550,37 @@ server <- function(input, output) {
     if(garch.config == 't-GARCH'){
       
       g = fGarch::garchFit(~garch(1,1), port$PRet,
-                           cond.dist = "norm", trace = FALSE)
+                           cond.dist = "std", trace = FALSE)
       
       # compute sigma for t + 1
-      sigma. = fGarch::predict(g)[1,3]
+      sigma. = fGarch::predict(g)[1,3] 
       
       # Computing the white noise from the schock from the GARCH(1,1)
       # If our model is right it is supposed to
       # follow the distribution from the 'cond.dist' in garchFit
-      #epsilon.t <- (g@residuals/g@sigma.t)
+      epsilon.t <- (g@residuals/g@sigma.t)
+      
+      # Estimating the distribution of the shocks.
+      tstud.fit <- MASS::fitdistr(epsilon.t, 't')
+      mu.tstud <- tstud.fit$estimate[1]
+      sigma.tstud <- tstud.fit$estimate[2]
+      df.tstud <- tstud.fit$estimate[3]
+      # Which should follow a t-student with 'df.tstud'.
+      standard.epsilon.t <- (epsilon.t - mu.tstud ) / sigma.tstud
+      # Finding the quantile of the t-stud
+      q <- fGarch::qstd(p, nu = df.tstud)
       
       # Adjusting the prices
       price.vec <- stock_price[-1]
       lag.price.vec <- lag(stock_price) %>% na.omit()
       
       # Compute VAR forecast
-      `VaR Forecast` = -sigma. * qnorm(p)
+      `VaR Forecast` = -sigma. * q
       VaR_forecast = `VaR Forecast` * last(price.vec)
       VaR_forecast_price = last(price.vec) - VaR_forecast
-      # Compute ES forecast under normality
-      `ES Forecast` = - (sigma.^2) * dnorm(-`VaR Forecast`, sd = sigma.) / p
-      ES_forecast = `ES Forecast` * last(price.vec)
-      ES_forecast_price = last(price.vec) + ES_forecast
       # # Compute the fitted standard deviation series
       Vol_vec <- g %>% fBasics::volatility()
-      VaR_vec <- Vol_vec * qnorm(p)
-      ES_vec <- - (Vol_vec^2) * dnorm(VaR_vec, sd = Vol_vec) / p
+      VaR_vec <- Vol_vec * q
       
       # Computing the next step forecast
       ## Data
@@ -588,9 +593,7 @@ server <- function(input, output) {
         mutate(price = price.vec,
                LaggedPrice = lag.price.vec,
                VaR = VaR_vec * LaggedPrice,
-               ES = ES_vec * LaggedPrice,
-               VaR_price = price + VaR,
-               ES_price = price + ES) %>% 
+               VaR_price = price + VaR) %>% 
         drop_na() %>% 
         ggplot(aes(x = Data)) +
         geom_path(aes(y = price)) +
@@ -598,15 +601,10 @@ server <- function(input, output) {
         geom_ribbon(aes(ymin = VaR_price,
                         ymax = price + (price - VaR_price),
                         alpha = 0.3), fill = 'purple') +
-        geom_path(aes(y = ES_price, colour = 'Expected-Shortfall')) +
         geom_point(aes(x = `Date Forecast`, y = VaR_forecast_price, colour = 'VaR Forecast')) +
-        geom_point(aes(x = `Date Forecast`, y = ES_forecast_price, colour = 'ES Forecast')) +
         scale_colour_manual(name = '',
                             values = c(`Value-at-Risk` = 'red',
-                                       `Expected-Shortfall` = 'blue',
-                                       `VaR Forecast` = 'darkred',
-                                       `ES Forecast` =  'darkblue',
-                                       Volatility = 'purple')) +
+                                       `VaR Forecast` = 'darkred')) +
         labs(title = 'Model Results',
              caption = 'source: Yahoo Finance') +
         theme_bw()
@@ -614,9 +612,6 @@ server <- function(input, output) {
       res <- ggplotly(ply)
       
     }
-    
-    
-    
     
     return(res)
   })
