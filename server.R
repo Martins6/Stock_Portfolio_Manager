@@ -383,7 +383,7 @@ server <- function(input, output) {
         # Compute VAR forecast
         `VaR Forecast` = -sigma. * qnorm(p)
         # Compute ES forecast under normality
-        `ES Forecast` = - (sigma.^2) * dnorm(-`VaR Previsto`, sd = sigma.) / p
+        `ES Forecast` = - (sigma.^2) * dnorm(-`VaR Forecast`, sd = sigma.) / p
         
         # # Compute the fitted standard deviation series
         Vol_vec <- g %>% fBasics::volatility()
@@ -407,7 +407,7 @@ server <- function(input, output) {
           geom_path(aes(y = VaR, colour = 'Value-at-Risk')) +
           geom_path(aes(y = ES, colour = 'Expected-Shortfall')) +
           geom_point(aes(x = `Date Forecast`, y = -`VaR Forecast`, colour = 'VaR Forecast')) +
-          geom_point(aes(x = `Data Forecast`, y = `ES Forecast`, colour = 'ES Forecast')) +
+          geom_point(aes(x = `Date Forecast`, y = `ES Forecast`, colour = 'ES Forecast')) +
           scale_colour_manual(name = '',
                               values = c(`Value-at-Risk` = 'red',
                                          `Expected-Shortfall` = 'blue',
@@ -478,6 +478,9 @@ server <- function(input, output) {
     
     
     ############# If our Stock is not the Portfolio...
+    
+    if(stock_selected != 'Portfolio'){
+      
     stock_price <- port.prices()[stock_selected] %>% pull()
     
     if(garch.config == 'N-GARCH'){
@@ -611,6 +614,7 @@ server <- function(input, output) {
       
       res <- ggplotly(ply)
       
+    }
     }
     
     return(res)
