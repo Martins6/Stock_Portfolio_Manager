@@ -13,7 +13,7 @@ stock_prices <- function(stocks, start.date){
     map(~quantmod::Ad(get(.)))
   
   # Collecting the vector of dates from the xts object.
-  Data <- prices[[1]] %>% index()
+  Data <- prices[[1]] %>% zoo::index()
   # Trasnforming from xts to tibble.
   prices <- prices %>% 
     as_tibble(.name_repair = 'unique') %>%

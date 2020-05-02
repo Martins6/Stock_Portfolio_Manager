@@ -38,7 +38,7 @@ body <- dashboardBody(
             # Intro
             fluidRow(
               box(h3('Portfolio Overview'),
-                  p('For a weekly update or the start of a in-depth study.'),
+                  p('For a weekly update or the start of a in-depth study, both for descriptive or modelling.'),
                   )
             ),
             
@@ -87,32 +87,10 @@ body <- dashboardBody(
               
             ),
             
-            ################## ********************  Percentual Return Distribution #################
+            ################## ********************  Classic Sharpe Ratio and CAPM #################
             # Intro
             fluidRow(
-              box(h3('Percentual Return Distribution'),
-                  p('Understanding the probabilistic properties of the return in our Portfolio through some key statistics.'),
-                  p('For better understanding of the statistics, please checkout the About tab.'),
-                  p('Keep in mind that in this section, the more data we have the better our analysis is.')
-              )
-            ),
-            
-            fluidRow(
-              # Distribution Plot
-              box(title = 'Distribution Plot', width = 6,
-                  plotOutput('dist_plot')
-                  ),
-              # Distribution Key-Statistics
-              box(title = 'Key Statistics', width = 6,
-                  DTOutput('dist_key_stat')
-                  )
-              
-            ),
-            
-            ################## ********************  Modified Sharpe Ratio and CAPM #################
-            # Intro
-            fluidRow(
-              box(h3('Modified Sharpe Ratio and CAPM'),
+              box(h3('Classical Sharpe Ratio and CAPM'),
                   p('In this section, we wish to compare our Portfolio with the Market, in order to understand how well we are perfoming against the market.'),
                   p('For better understanding of the statistics, please checkout the About tab.'),
                   p('Keep in mind that in this section, the more data we have the better our analysis is.')
@@ -130,7 +108,7 @@ body <- dashboardBody(
             
             fluidRow(
               # Sharpe Ratio comparison
-              box(title = 'Comparing Modified Sharpe Ratio (Return/Risk)', width = 10,
+              box(title = 'Comparing Classical Sharpe Ratio (Return/Volatiltiy)', width = 10,
                   plotlyOutput('market_portfolio_sr')
                   ),
               box(title = '', width = 2,
@@ -158,6 +136,70 @@ body <- dashboardBody(
             )
             
      # End of the Descriptive Section       
+    ),
+    #################################### Modelling Section #####################
+    tabItem(tabName = "model",
+            
+            ################## ********************  Percentual Return Distribution #################
+            # Intro
+            fluidRow(
+              box(h3('Percentual Return Distribution'),
+                  p('Understanding the probabilistic properties of the return in our Portfolio through some key statistics.'),
+                  p('For better understanding of the statistics, please checkout the About tab.'),
+                  p('Keep in mind that in this section, the more data we have the better our analysis is.')
+              )
+            ),
+            
+            fluidRow(
+              # Distribution Plot
+              box(title = 'Distribution Plot', width = 6,
+                  plotOutput('dist_plot')
+              ),
+              # Distribution Key-Statistics
+              box(title = 'Key Statistics', width = 6,
+                  DTOutput('dist_key_stat')
+              )
+              
+            ),
+            
+            
+            ################## ******************** Risk Modelling #######################
+            fluidRow(
+              box(h3('Risk Modelling'),
+                  p('In this section, we wish to create confidence intervals and forecast the VaR and ES of the fowarding day.'),
+                  p('For better understanding of the statistics, please checkout the About tab.'),
+                  p('Keep in mind that in this section, the more data we have the better our analysis is.')
+              ),
+            ),
+            
+            fluidRow(
+              # GARCH Plot
+              box(title = '', width = 10,
+                    plotlyOutput('risk_plot')
+                    ),
+              # Choosing GARCH Model  
+              box(title = '', width = 2,
+                  uiOutput('stock_selection_risk'),
+                  selectInput('garch_selection', 'Which GARCH Model do you wish to use?',
+                                choices = c('N-GARCH', 't-GARCH'),
+                                selected = 'N-GARCH', multiple = FALSE),
+                  numericInput('p_risk',label = 'What quantile do you wish to consider? Or, how much risk? (%)',
+                               value = 5, min = 0.1, max = 15),
+                  actionButton('go_garch', 'Submit')
+                    )
+            ),
+            
+            fluidRow(
+              # Diagnostics of the model
+              box(title = 'Model Diagnostics', width = 4,
+                  DTOutput('model_diag')
+              )
+              
+            )
+              
+            
+            
+      # End of the Modelling Section
     )
     # End of the tabitems
   )

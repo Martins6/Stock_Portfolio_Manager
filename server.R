@@ -1,7 +1,8 @@
 server <- function(input, output) {
   
   ########################### / INPUT / ############################
-  ########################### Portfolio Overview #############
+  ########################### > Description < #####################
+  ########################### Portfolio Overview #################
   ########################### ********** Portfolio #############
   dt_csv <- eventReactive(input$go_csv, {
     
@@ -68,7 +69,7 @@ server <- function(input, output) {
     
   })
   ########################### Modified Sharpe Ratio and CAPM ######################
-  ########################### ********** Market Index Returns ####################
+  ########################### ********** Market Index Returns #####################
   market_index_return <- eventReactive(input$go_sharpe_capm, {
     
     symbols <- input$market_index
@@ -86,17 +87,26 @@ server <- function(input, output) {
     return(res)
     
   })
-  
+  ########################### > Modelling < #######################################
+  ########################### Risk Modelling ######################
+  ########################### ********** p-value #####################
+  p.val.risk <- eventReactive(input$go_garch, {
+    
+    res <- input$p_risk/100 %>% as.double()
+    
+    return(res)
+  })
   
   ########################### / OUTPUT / ###########################
+  ########################### > Description < #####################
   ########################### Portfolio Overview #############
-  ########################### ********** In case of quick updates #############
+  ########################### ********** UI: In case of quick updates #############
   output$quick_update_conf <- renderUI({
     
     if(input$quick_update == TRUE){
       
     p('In this case, you should refrain from continue the in-depth study.')
-    selectInput('quick_update_selection', 'What time period?', c('1 Week Ago', '2 Weeks Ago', '1 Month'),
+    selectInput('quick_update_selection', 'What time period?', c('1 Week Ago', '2 Weeks Ago', '1 Month Ago'),
                 selected = '1 Week Ago')
     }
     
@@ -160,56 +170,6 @@ server <- function(input, output) {
       geom_path(aes(colour = Stocks))
     
   })
-  ########################### Percentual Return Distribution ######################
-  ########################### ********** Distribution Plot #############
-  output$dist_plot <- renderPlot({
-    
-    port <- port.pret.cr()
-    
-    # Choosing the optimal bindwidth with Freedman-Diaconis
-    fd <- 2 * IQR(port$PRet) / length(port$PRet)^(1/3)
-    
-    port %>% 
-      ggplot() +
-      geom_histogram(aes(x = PRet), binwidth = fd,
-                     colour = 'darkblue', fill = 'lightblue') +
-      labs(x = 'Returns (%)',
-           y = '')
-      
-    
-  })
-  
-  ########################### ********** Key-Statistics Datatable #############
-  output$dist_key_stat <- renderDT({
-    
-    port <- port.pret.cr() %>% filter(Stocks == 'Portfolio')
-    
-    # Calculating the actual Volatility, VaR and ES through N-GARCH (Normal-GARCH).
-    # Quantile that we wish to consider.
-    p <- 0.05
-    # Just demeaning it, for simplify the calculations.
-    vec <- port$PRet - mean(port$PRet, na.rm = TRUE)
-    # Fitting a GARCH model
-    g = fGarch::garchFit(~garch(1,1), vec,
-                         cond.dist = "norm",
-                         include.mean = FALSE, trace = FALSE)
-    ## Computing what we want from the GARCH
-    Vol <- g %>% fBasics::volatility() %>% dplyr::last()
-    VaR <- Vol * qnorm(p) %>% round(4) 
-    ES <- -(Vol^2) * dnorm(-VaR, sd = Vol) / p 
-    
-    aux <- c(Vol, -VaR, ES) %>% round(4) %>% scales::percent()
-    # Other interesting statistics
-    skew <- PerformanceAnalytics::skewness(port$PRet) %>% round(4) 
-    kurt <- PerformanceAnalytics::kurtosis(port$PRet) %>% round(4) 
-    
-    res <- tibble(Statistic = c('Volatility', 'Value-at-Risk', 'Expected Shortfall', 'Skewness Coef.', 'Kurtosis Coef.'),
-           Value = c(aux, skew, kurt))
-    
-    res %>% datatable()
-    
-  })
-  
   ########################### Sharpe Ratio and CAPM ######################
   ########################### ********** Sharpe Ratio Portfolio versus Market #############
   output$market_portfolio_sr <- renderPlotly({
@@ -220,53 +180,27 @@ server <- function(input, output) {
     if(input$period_to_analyze_sr == '1 Month Ago'){aux_data <- 31}
     if(input$period_to_analyze_sr == 'Whole Period'){aux_data <- NULL}
     
-    
-    # P-Value from the risk-measure: Expected Shortfall
-    p <- 0.05
     # Market M. Sharpe Ratio
     market <- market_index_return() %>% drop_na()
-    vec <- market$PRet - mean(market$PRet, na.rm = TRUE)
-    # Using GARCH to calculate the Expected Shortfall (ES)
-    g = fGarch::garchFit(~garch(1,1), vec,
-                         cond.dist = "norm",
-                         include.mean = FALSE, trace = FALSE)
-    # # Compute the fitted standard deviation series
-    Vol_vec <- g %>% fBasics::volatility()
-    VaR_vec <- Vol_vec * qnorm(p)
-    ES_vec <- -(Vol_vec^2) * dnorm(-VaR_vec, sd = Vol_vec) / p
-    
     # Portfolio M. Sharpe Ratio
     port <- port.pret.cr() %>% filter(Stocks == 'Portfolio')
-    vec <- port$PRet - mean(port$PRet, na.rm = TRUE)
-    # Using GARCH to calculate the Expected Shortfall (ES)
-    g = fGarch::garchFit(~garch(1,1), vec,
-                         cond.dist = "norm",
-                         include.mean = FALSE, trace = FALSE)
-    # # Compute the fitted standard deviation series
-    Vol_vec <- g %>% fBasics::volatility()
-    VaR_vec <- Vol_vec * qnorm(p)
-    ES_vec <- -(Vol_vec^2) * dnorm(-VaR_vec, sd = Vol_vec) / p
     
     # Adjusting the dataframe to time window selected
     if(!is.null(aux_data)){
       port <- port %>% 
-        mutate(ES = abs(ES_vec),
-               PortSharpeRatio = round(PRet/ES, 4)) %>% 
+        mutate(PortSharpeRatio = round(PRet/sd(PRet), 4)) %>% 
         slice(( n()-aux_data ):n() )
       
       market <- market %>% 
-        mutate(ES = abs(ES_vec),
-               MarketSharpeRatio = round(PRet/ES, 4)) %>% 
+        mutate(MarketSharpeRatio = round(PRet/sd(PRet), 4)) %>% 
         slice(( n()-aux_data ):n() )
       
     }else{
       port <- port %>% 
-        mutate(ES = abs(ES_vec),
-               PortSharpeRatio = round(PRet/ES, 4))
+        mutate(PortSharpeRatio = round(PRet/sd(PRet), 4))
       
       market <- market %>% 
-        mutate(ES = abs(ES_vec),
-               MarketSharpeRatio = round(PRet/ES, 4)) 
+        mutate(MarketSharpeRatio = round(PRet/sd(PRet), 4)) 
     }
     
     # Plotting both data
@@ -357,7 +291,335 @@ server <- function(input, output) {
              icon = icon('not-equal'))
     
   })
+  ########################### > Modelling < ##############################
+  ########################### Percentual Return Distribution ######################
+  ########################### ********** Distribution Plot #############
+  output$dist_plot <- renderPlot({
+    
+    port <- port.pret.cr()
+    
+    # Choosing the optimal bindwidth with Freedman-Diaconis
+    fd <- 2 * IQR(port$PRet) / length(port$PRet)^(1/3)
+    
+    port %>% 
+      ggplot() +
+      geom_histogram(aes(x = PRet), binwidth = fd,
+                     colour = 'darkblue', fill = 'lightblue') +
+      labs(x = 'Returns (%)',
+           y = '')
+    
+    
+  })
   
+  ########################### ********** Key-Statistics Datatable #############
+  output$dist_key_stat <- renderDT({
+    
+    port <- port.pret.cr() %>% filter(Stocks == 'Portfolio')
+    
+    # Calculating the actual Volatility, VaR and ES through Historical Simulation.
+    # Quantile that we wish to consider.
+    p <- 0.05
+    ## Our vector of Percentual Returns
+    ys = sort(port$PRet)
+    ## Our index of the VaR
+    op = length(ys)*p
+    ## The actual VaR
+    VaR = -ys[op]
+    ## The ES
+    ES <- mean(ys[1:op])
+    ## Volatility
+    Vol <- sd(port$PRet) %>% round(4)
+    
+    aux <- c(Vol, VaR, ES) %>% round(4) %>% scales::percent()
+    
+    # Other interesting statistics
+    skew <- PerformanceAnalytics::skewness(port$PRet) %>% round(4) 
+    kurt <- PerformanceAnalytics::kurtosis(port$PRet) %>% round(4) 
+    Mu <- mean(port$PRet) %>% round(4)
+    
+    res <- tibble(Statistic = c('Mean', 'Volatility', 'Value-at-Risk (5%)',
+                                'Expected Shortfall (5%)', 'Skewness Coef.', 'Kurtosis Coef.'),
+                  Value = c(Mu, aux, skew, kurt))
+    
+    res %>% datatable()
+    
+  })
+  ########################### Risk Modelling ######################
+  ########################### ********** UI: Which Stock to Analyze #####################
+  output$stock_selection_risk <- renderUI({
+    
+    aux <- port.pret.cr() %>% pull(Stocks) %>% unique()
+    
+    selectInput('stock_selection_risk_ui', 'Which Stock do you wish to study?', aux, 'Portfolio')
+    
+  })
+  ########################### ********** Plot #############
+  output$risk_plot <- renderPlotly({
+    
+    # Quantile that we wish
+    p <- p.val.risk()
+    # What kind of GARCH model
+    garch.config <- input$garch_selection
+    # Stock to study
+    stock_selected <- input$stock_selection_risk_ui
+    # Our portfolio and Stocks data
+    port <- port.pret.cr() %>% filter(Stocks == stock_selected)
+    
+    if(stock_selected == 'Portfolio'){
+      
+      if(garch.config == 'N-GARCH'){
+        
+        g = fGarch::garchFit(~garch(1,1), port$PRet,
+                             cond.dist = "norm", trace = FALSE)
+        
+        # compute sigma for t + 1
+        sigma. = fGarch::predict(g)[1,3]
+        
+        # Computing the white noise from the schock from the GARCH(1,1)
+        # If our model is right it is supposed to
+        # follow the distribution from the 'cond.dist' in garchFit
+        #epsilon.t <- (g@residuals/g@sigma.t)
+        
+        # Compute VAR forecast
+        `VaR Forecast` = -sigma. * qnorm(p)
+        # Compute ES forecast under normality
+        `ES Forecast` = - (sigma.^2) * dnorm(-`VaR Previsto`, sd = sigma.) / p
+        
+        # # Compute the fitted standard deviation series
+        Vol_vec <- g %>% fBasics::volatility()
+        VaR_vec <- Vol_vec * qnorm(p)
+        ES_vec <- - (Vol_vec^2) * dnorm(VaR_vec, sd = Vol_vec) / p
+        
+        # Computing the next step forecast
+        ## Data
+        `Date Forecast` <- port$Data %>% 
+          last(.) + 1
+        
+        # Vizualising
+        ## VaR
+        ply <- port %>% 
+          # Adding our model to the data matrix
+          mutate(Vol = Vol_vec,
+                 VaR = VaR_vec,
+                 ES = ES_vec) %>% 
+          ggplot(aes(x = Data)) +
+          geom_path(aes(y = PRet)) +
+          geom_path(aes(y = VaR, colour = 'Value-at-Risk')) +
+          geom_path(aes(y = ES, colour = 'Expected-Shortfall')) +
+          geom_point(aes(x = `Date Forecast`, y = -`VaR Forecast`, colour = 'VaR Forecast')) +
+          geom_point(aes(x = `Data Forecast`, y = `ES Forecast`, colour = 'ES Forecast')) +
+          scale_colour_manual(name = '',
+                              values = c(`Value-at-Risk` = 'red',
+                                         `Expected-Shortfall` = 'blue',
+                                         `VaR Forecast` = 'darkred',
+                                         `ES Forecast` =  'darkblue')) +
+          labs(title = 'Model Results',
+               caption = 'source: Yahoo Finance') +
+          theme_bw()
+        
+        res <- ggplotly(ply)
+      }
+      
+      if(garch.config == 't-GARCH'){
+        
+        g = fGarch::garchFit(~garch(1,1), port$PRet,
+                     cond.dist = "std", include.mean = FALSE, trace = FALSE)
+        
+        # compute sigma for t + 1
+        sigma. = fGarch::predict(g)[1,3] 
+        
+        # Computing the white noise from the schock from the GARCH(1,1)
+        # If our model is right it is supposed to
+        # follow the distribution from the 'cond.dist' in garchFit
+        epsilon.t <- (g@residuals/g@sigma.t)
+        
+        # Estimating the distribution of the shocks.
+        tstud.fit <- MASS::fitdistr(epsilon.t, 't')
+        mu.tstud <- tstud.fit$estimate[1]
+        sigma.tstud <- tstud.fit$estimate[2]
+        df.tstud <- tstud.fit$estimate[3]
+        # Which should follow a t-student with 'df.tstud'.
+        standard.epsilon.t <- (epsilon.t - mu.tstud ) / sigma.tstud
+        # Finding the quantile of the t-stud
+        q <- fGarch::qstd(p, nu = df.tstud)
+        
+        # Compute VAR forecast
+        `VaR Forecast` = -sigma. * q
+        
+        # # Compute the fitted standard deviation series
+        Vol_vec <- g %>% fBasics::volatility()
+        VaR_vec <- Vol_vec * q
+        
+        # Computing the next step forecast
+        ## Data
+        `Date Forecast` <- port$Data %>% 
+          last(.) + 1
+        
+        # Vizualising
+        ## VaR
+        ply <- port %>% 
+          # Adding our model to the data matrix
+          mutate(VaR = VaR_vec) %>% 
+          ggplot(aes(x = Data)) +
+          geom_path(aes(y = PRet)) +
+          geom_path(aes(y = VaR, colour = 'Value-at-Risk')) +
+          geom_point(aes(x = `Date Forecast`, y = -`VaR Forecast`, colour = 'VaR Forecast')) +
+          scale_colour_manual(name = '',
+                              values = c(`Value-at-Risk` = 'red',
+                                         `VaR Forecast` = 'darkred')) +
+          labs(title = 'Model Results',
+               caption = 'source: Yahoo Finance') +
+          theme_bw()
+        
+        res <- ggplotly(ply)
+        
+      }
+    }
+    
+    
+    ############# If our Stock is not the Portfolio...
+    stock_price <- port.prices()[stock_selected] %>% pull()
+    
+    if(garch.config == 'N-GARCH'){
+      
+      g = fGarch::garchFit(~garch(1,1), port$PRet,
+                           cond.dist = "norm", trace = FALSE)
+      
+      # compute sigma for t + 1
+      sigma. = fGarch::predict(g)[1,3]
+      
+      # Computing the white noise from the schock from the GARCH(1,1)
+      # If our model is right it is supposed to
+      # follow the distribution from the 'cond.dist' in garchFit
+      #epsilon.t <- (g@residuals/g@sigma.t)
+      
+      # Adjusting the prices
+      price.vec <- stock_price[-1]
+      lag.price.vec <- lag(stock_price) %>% na.omit()
+      
+      # Compute VAR forecast
+      `VaR Forecast` = -sigma. * qnorm(p)
+      VaR_forecast = `VaR Forecast` * last(price.vec)
+      VaR_forecast_price = last(price.vec) - VaR_forecast
+      # Compute ES forecast under normality
+      `ES Forecast` = - (sigma.^2) * dnorm(-`VaR Forecast`, sd = sigma.) / p
+      ES_forecast = `ES Forecast` * last(price.vec)
+      ES_forecast_price = last(price.vec) + ES_forecast
+      # # Compute the fitted standard deviation series
+      Vol_vec <- g %>% fBasics::volatility()
+      VaR_vec <- Vol_vec * qnorm(p)
+      ES_vec <- - (Vol_vec^2) * dnorm(VaR_vec, sd = Vol_vec) / p
+      
+      # Computing the next step forecast
+      ## Data
+      `Date Forecast` <- port$Data %>% 
+        last(.) + 1
+      
+      # Vizualising
+      ply <- port %>% 
+        # Adding our model to the data matrix
+        mutate(price = price.vec,
+               LaggedPrice = lag.price.vec,
+               VaR = VaR_vec * LaggedPrice,
+               ES = ES_vec * LaggedPrice,
+               VaR_price = price + VaR,
+               ES_price = price + ES) %>% 
+        drop_na() %>% 
+        ggplot(aes(x = Data)) +
+        geom_path(aes(y = price)) +
+        geom_path(aes(y = VaR_price, colour = 'Value-at-Risk')) +
+        geom_ribbon(aes(ymin = VaR_price,
+                        ymax = price + (price - VaR_price),
+                        alpha = 0.3), fill = 'purple') +
+        geom_path(aes(y = ES_price, colour = 'Expected-Shortfall')) +
+        geom_point(aes(x = `Date Forecast`, y = VaR_forecast_price, colour = 'VaR Forecast')) +
+        geom_point(aes(x = `Date Forecast`, y = ES_forecast_price, colour = 'ES Forecast')) +
+        scale_colour_manual(name = '',
+                            values = c(`Value-at-Risk` = 'red',
+                                       `Expected-Shortfall` = 'blue',
+                                       `VaR Forecast` = 'darkred',
+                                       `ES Forecast` =  'darkblue',
+                                       Volatility = 'purple')) +
+        labs(title = 'Model Results',
+             caption = 'source: Yahoo Finance') +
+        theme_bw()
+      
+      res <- ggplotly(ply)
+    }
+    
+    if(garch.config == 't-GARCH'){
+      
+      g = fGarch::garchFit(~garch(1,1), port$PRet,
+                           cond.dist = "norm", trace = FALSE)
+      
+      # compute sigma for t + 1
+      sigma. = fGarch::predict(g)[1,3]
+      
+      # Computing the white noise from the schock from the GARCH(1,1)
+      # If our model is right it is supposed to
+      # follow the distribution from the 'cond.dist' in garchFit
+      #epsilon.t <- (g@residuals/g@sigma.t)
+      
+      # Adjusting the prices
+      price.vec <- stock_price[-1]
+      lag.price.vec <- lag(stock_price) %>% na.omit()
+      
+      # Compute VAR forecast
+      `VaR Forecast` = -sigma. * qnorm(p)
+      VaR_forecast = `VaR Forecast` * last(price.vec)
+      VaR_forecast_price = last(price.vec) - VaR_forecast
+      # Compute ES forecast under normality
+      `ES Forecast` = - (sigma.^2) * dnorm(-`VaR Forecast`, sd = sigma.) / p
+      ES_forecast = `ES Forecast` * last(price.vec)
+      ES_forecast_price = last(price.vec) + ES_forecast
+      # # Compute the fitted standard deviation series
+      Vol_vec <- g %>% fBasics::volatility()
+      VaR_vec <- Vol_vec * qnorm(p)
+      ES_vec <- - (Vol_vec^2) * dnorm(VaR_vec, sd = Vol_vec) / p
+      
+      # Computing the next step forecast
+      ## Data
+      `Date Forecast` <- port$Data %>% 
+        last(.) + 1
+      
+      # Vizualising
+      ply <- port %>% 
+        # Adding our model to the data matrix
+        mutate(price = price.vec,
+               LaggedPrice = lag.price.vec,
+               VaR = VaR_vec * LaggedPrice,
+               ES = ES_vec * LaggedPrice,
+               VaR_price = price + VaR,
+               ES_price = price + ES) %>% 
+        drop_na() %>% 
+        ggplot(aes(x = Data)) +
+        geom_path(aes(y = price)) +
+        geom_path(aes(y = VaR_price, colour = 'Value-at-Risk')) +
+        geom_ribbon(aes(ymin = VaR_price,
+                        ymax = price + (price - VaR_price),
+                        alpha = 0.3), fill = 'purple') +
+        geom_path(aes(y = ES_price, colour = 'Expected-Shortfall')) +
+        geom_point(aes(x = `Date Forecast`, y = VaR_forecast_price, colour = 'VaR Forecast')) +
+        geom_point(aes(x = `Date Forecast`, y = ES_forecast_price, colour = 'ES Forecast')) +
+        scale_colour_manual(name = '',
+                            values = c(`Value-at-Risk` = 'red',
+                                       `Expected-Shortfall` = 'blue',
+                                       `VaR Forecast` = 'darkred',
+                                       `ES Forecast` =  'darkblue',
+                                       Volatility = 'purple')) +
+        labs(title = 'Model Results',
+             caption = 'source: Yahoo Finance') +
+        theme_bw()
+      
+      res <- ggplotly(ply)
+      
+    }
+    
+    
+    
+    
+    return(res)
+  })
  
   # End of the server function 
 }
