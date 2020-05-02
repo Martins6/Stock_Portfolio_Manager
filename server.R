@@ -68,7 +68,7 @@ server <- function(input, output) {
     return(res)
     
   })
-  ########################### Modified Sharpe Ratio and CAPM ######################
+  ########################### Classical Sharpe Ratio and CAPM ######################
   ########################### ********** Market Index Returns #####################
   market_index_return <- eventReactive(input$go_sharpe_capm, {
     
@@ -95,6 +95,25 @@ server <- function(input, output) {
     res <- input$p_risk/100 %>% as.double()
     
     return(res)
+  })
+  ########################### Modified Sharpe Ratio and CAPM ######################
+  ########################### ********** Market Index Returns #####################
+  market_index_return <- eventReactive(input$go_sharpe_model, {
+    
+    symbols <- input$market_index_model
+    # Start date to analyze
+    aux_date <- input$date
+    
+    aux <- stock_prices(symbols, aux_date)
+    
+    res <- aux %>% 
+      rename(Market = any_of(symbols)) %>% 
+      mutate(PRet = if_else(Market != 0, 
+                            ( Market - lag(Market) ) / lag(Market),
+                            NA_real_))
+    
+    return(res)
+    
   })
   
   ########################### / OUTPUT / ###########################
@@ -170,7 +189,7 @@ server <- function(input, output) {
       geom_path(aes(colour = Stocks))
     
   })
-  ########################### Sharpe Ratio and CAPM ######################
+  ########################### Classical Sharpe Ratio and CAPM ######################
   ########################### ********** Sharpe Ratio Portfolio versus Market #############
   output$market_portfolio_sr <- renderPlotly({
     
@@ -344,7 +363,7 @@ server <- function(input, output) {
     res %>% datatable()
     
   })
-  ########################### Risk Modelling ######################
+  ########################### Risk Modelling ############################################
   ########################### ********** UI: Which Stock to Analyze #####################
   output$stock_selection_risk <- renderUI({
     
@@ -619,6 +638,18 @@ server <- function(input, output) {
     
     return(res)
   })
+  ########################### Modified Sharpe Ratio ############################################
+  output$market_portfolio_model_sr <- renderPlotly({
+    
+    
+    
+  })
+  
+  
+  
+  
+  
+  
  
   # End of the server function 
 }

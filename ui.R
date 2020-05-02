@@ -195,9 +195,41 @@ body <- dashboardBody(
                   DTOutput('model_diag')
               )
               
-            )
+            ),
+            ################## ******************** Modified Sharpe Ratio #################
+            # Intro
+            fluidRow(
+              box(h3('Modified Sharpe Ratio'),
+                  p('In this section, we wish to compare our Portfolio Returns with the Market Returns, in order to understand how well we are perfoming against the market.'),
+                  p('For better understanding of the statistics, please checkout the About tab.'),
+                  p('Keep in mind that in this section, the more data we have the better our analysis is.')
+              ),
               
+              # Inputs
+              box(title = '', width = 4, solidHeader = TRUE,
+                  helpText('For more precise results, please use at least one year worth of data.'),
+                  textInput('market_index_model',
+                            'Which Market Index (or ETF) do you wish to compare your Portfolio?',
+                            value = 'SPY'),
+                  actionButton('go_sharpe_model', 'Submit')
+              )
+            ),
             
+            fluidRow(
+              # Sharpe Ratio comparison
+              box(title = 'Comparing Modified Sharpe Ratio (Return/VaR)', width = 10,
+                  plotlyOutput('market_portfolio_model_sr')
+              ),
+              box(title = '', width = 2,
+                  helpText('Keep in mind that the VaR is calculated by the model above.'),
+                  selectInput('period_to_analyze_model_sr',
+                              label = 'Since when do you wish to analyze?', 
+                              choices = c('1 Week Ago', '2 Weeks Ago', '1 Month Ago', 'Whole Period'),
+                              multiple = FALSE,
+                              selected = '1 Week Ago'
+                  )
+              )
+            )  
             
       # End of the Modelling Section
     )
