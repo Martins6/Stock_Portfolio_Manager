@@ -208,6 +208,7 @@ body <- dashboardBody(
               # Inputs
               box(title = '', width = 4, solidHeader = TRUE,
                   helpText('For more precise results, please use at least one year worth of data.'),
+                  helpText('Keep in mind that the VaR is calculated by the model above.'),
                   textInput('market_index_model',
                             'Which Market Index (or ETF) do you wish to compare your Portfolio?',
                             value = 'SPY'),
@@ -221,7 +222,6 @@ body <- dashboardBody(
                   plotlyOutput('market_portfolio_model_sr')
               ),
               box(title = '', width = 2,
-                  helpText('Keep in mind that the VaR is calculated by the model above.'),
                   selectInput('period_to_analyze_model_sr',
                               label = 'Since when do you wish to analyze?', 
                               choices = c('1 Week Ago', '2 Weeks Ago', '1 Month Ago', 'Whole Period'),

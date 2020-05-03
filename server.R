@@ -98,7 +98,7 @@ server <- function(input, output) {
   })
   ########################### Modified Sharpe Ratio and CAPM ######################
   ########################### ********** Market Index Returns #####################
-  market_index_return <- eventReactive(input$go_sharpe_model, {
+  market_index_return_model <- eventReactive(input$go_sharpe_model, {
     
     symbols <- input$market_index_model
     # Start date to analyze
@@ -641,16 +641,85 @@ server <- function(input, output) {
   ########################### Modified Sharpe Ratio ############################################
   output$market_portfolio_model_sr <- renderPlotly({
     
+    # Choosing the timeframe to analyze
+    if(input$period_to_analyze_model_sr == '1 Week Ago'){aux_data <- 7}
+    if(input$period_to_analyze_model_sr == '2 Weeks Ago'){aux_data <- 15}
+    if(input$period_to_analyze_model_sr == '1 Month Ago'){aux_data <- 31}
+    if(input$period_to_analyze_model_sr == 'Whole Period'){aux_data <- NULL}
     
+    # Market M. Sharpe Ratio
+    market <- market_index_return_model() %>% drop_na()
+    # Portfolio M. Sharpe Ratio
+    port <- port.pret.cr() %>% filter(Stocks == 'Portfolio')
     
+    # Quantile that we wish
+    p <- p.val.risk()
+    # What kind of GARCH model
+    garch.config <- input$garch_selection
+    
+    if(garch.config == 'N-GARCH'){
+      g = fGarch::garchFit(~garch(1,1), port$PRet,
+                           cond.dist = "norm", trace = FALSE)
+      
+      Vol_vec <- g %>% fBasics::volatility()
+      VaR_vec <- Vol_vec * qnorm(p)
+    }
+    if(garch.config == 't-GARCH'){
+      
+      g = fGarch::garchFit(~garch(1,1), port$PRet,
+                           cond.dist = "std", trace = FALSE)
+      
+      # Computing the white noise from the schock from the GARCH(1,1)
+      # If our model is right it is supposed to
+      # follow the distribution from the 'cond.dist' in garchFit
+      epsilon.t <- (g@residuals/g@sigma.t)
+      
+      # Estimating the distribution of the shocks.
+      tstud.fit <- MASS::fitdistr(epsilon.t, 't')
+      mu.tstud <- tstud.fit$estimate[1]
+      sigma.tstud <- tstud.fit$estimate[2]
+      df.tstud <- tstud.fit$estimate[3]
+      # Which should follow a t-student with 'df.tstud'.
+      standard.epsilon.t <- (epsilon.t - mu.tstud ) / sigma.tstud
+      # Finding the quantile of the t-stud
+      q <- fGarch::qstd(p, nu = df.tstud)
+      
+      # # Compute the fitted standard deviation series
+      Vol_vec <- g %>% fBasics::volatility()
+      VaR_vec <- Vol_vec * q
+    }
+    
+    # Adjusting the dataframe to time window selected
+    if(!is.null(aux_data)){
+      port <- port %>% 
+        mutate(PortSharpeRatio = round(PRet/VaR_vec, 4)) %>% 
+        slice(( n()-aux_data ):n() )
+      
+      market <- market %>% 
+        mutate(MarketSharpeRatio = round(PRet/VaR_vec, 4)) %>% 
+        slice(( n()-aux_data ):n() )
+      
+    }else{
+      port <- port %>% 
+        mutate(PortSharpeRatio = round(PRet/VaR_vec, 4))
+      
+      market <- market %>% 
+        mutate(MarketSharpeRatio = round(PRet/VaR_vec, 4)) 
+    }
+    
+    # Plotting both data
+    res <- ggplot() +
+      geom_path(data = port,
+                aes(x = Data, y = PortSharpeRatio), colour = 'red') +
+      geom_path(data = market,
+                aes(x = Data, y = MarketSharpeRatio), colour = 'blue') +
+      labs(title = 'Market vs. Portfolio')
+    
+    res <- res %>% ggplotly()
+    return(res)
   })
   
   
-  
-  
-  
-  
- 
   # End of the server function 
 }
 
