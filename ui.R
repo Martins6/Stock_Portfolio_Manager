@@ -191,8 +191,8 @@ body <- dashboardBody(
             
             fluidRow(
               # Diagnostics of the model
-              box(title = 'Model Diagnostics', width = 4,
-                  DTOutput('model_diag')
+              box(title = 'Model Diagnostics', width = 6,
+                  plotOutput('model_diag_hist')
               )
               
             ),
