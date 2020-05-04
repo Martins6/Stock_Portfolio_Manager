@@ -653,7 +653,7 @@ server <- function(input, output) {
     
     return(res)
   })
-  ########################### ********** Model Plot ################
+  ########################### ********** Model Diagnostics Distribution Assumptions ################
   output$model_diag_hist <- renderPlot({
     
     # Quantile that we wish
@@ -728,7 +728,7 @@ server <- function(input, output) {
         dist_fit <- MASS::fitdistr(epsilon.t, densfun = 'normal')
         param <- dist_fit$estimate
         
-        line_dist2 <- dnorm(seq(-4,4, l = 100), mean = 0, sd = param[2])
+        line_dist2 <- dnorm(seq(-4,4, l = 100), mean = 0, sd = 1)
         l <- length(seq(-4,4, l = 100))
         line_dt2 <- line_dist2 %>% 
           enframe() %>% 
@@ -753,7 +753,7 @@ server <- function(input, output) {
         param <- dist_fit$estimate
         
         l <- length(seq(-4,4, l = 100))
-        line_dist2 <- fGarch::dstd(seq(-4,4, l = 100), mean = 0, sd = param[2], nu = param[3])
+        line_dist2 <- fGarch::dstd(seq(-4,4, l = 100), mean = 0, sd = 1, nu = param[3])
         line_dt2 <- line_dist2 %>% 
           enframe() %>% 
           mutate(name = seq(min(epsilon.t), max(epsilon.t), l = l))
@@ -774,7 +774,84 @@ server <- function(input, output) {
 
     return(res)
   })
-  
+  ########################### ********** Model Diagnostics LJung-Box Test ################
+  output$`ljung-box` <- renderDT({
+    
+    # Quantile that we wish
+    p <- p.val.risk()
+    # What kind of GARCH model
+    garch.config <- input$garch_selection
+    # Stock to study
+    stock_selected <- input$stock_selection_risk_ui
+    # Our portfolio and Stocks data
+    port <- port.pret.cr() %>% filter(Stocks == stock_selected)
+    
+    if(stock_selected == 'Portfolio'){
+      
+      if(garch.config == 'N-GARCH'){
+        
+        g = fGarch::garchFit(~garch(1,1), port$PRet,
+                             cond.dist = "norm", trace = FALSE)
+        
+        # Computing the white noise from the schock from the GARCH(1,1)
+        # If our model is right it is supposed to
+        # follow the distribution from the 'cond.dist' in garchFit
+        epsilon.t <- (g@residuals/g@sigma.t)
+      }
+      
+      if(garch.config == 't-GARCH'){
+        
+        g = fGarch::garchFit(~garch(1,1), port$PRet,
+                             cond.dist = "std", include.mean = FALSE, trace = FALSE)
+        
+        # Computing the white noise from the schock from the GARCH(1,1)
+        # If our model is right it is supposed to
+        # follow the distribution from the 'cond.dist' in garchFit
+        epsilon.t <- (g@residuals/g@sigma.t)
+        
+      }
+    }
+    ############# If our Stock is not the Portfolio...
+    if(stock_selected != 'Portfolio'){
+      
+      stock_price <- port.prices()[stock_selected] %>% pull()
+      
+      if(garch.config == 'N-GARCH'){
+        
+        g = fGarch::garchFit(~garch(1,1), port$PRet,
+                             cond.dist = "norm", trace = FALSE)
+        
+        # Computing the white noise from the schock from the GARCH(1,1)
+        # If our model is right it is supposed to
+        # follow the distribution from the 'cond.dist' in garchFit
+        epsilon.t <- (g@residuals/g@sigma.t)
+        
+      }
+      
+      if(garch.config == 't-GARCH'){
+        
+        g = fGarch::garchFit(~garch(1,1), port$PRet,
+                             cond.dist = "std", trace = FALSE)
+        
+        # Computing the white noise from the schock from the GARCH(1,1)
+        # If our model is right it is supposed to
+        # follow the distribution from the 'cond.dist' in garchFit
+        epsilon.t <- (g@residuals/g@sigma.t)
+        
+      }
+    }
+    
+    btest <- epsilon.t %>% Box.test(type = 'Ljung-Box') %>% 
+      broom::tidy() %>% 
+      select(-parameter) %>% 
+      mutate(Interpretation = if_else(p.value > p, 'Not Serially Correlated', 'Serially Correlated'),
+             statistic = round(statistic, 4),
+             p.value = round(p.value, 4)) %>% 
+      select(method, statistic, p.value, Interpretation) %>% 
+      datatable()
+    
+    return(btest)
+  })
   
   
   ########################### Modified Sharpe Ratio ############################################
