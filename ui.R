@@ -153,6 +153,88 @@ body <- dashboardBody(
               )
             ),
             
+            fluidRow(
+              box(h3('Value-at-Risk(p) [ VaR(p) ]'))
+            ),
+            
+            fluidRow(
+              box(width = 12,
+                  
+                  p('Like we have said in the Percentual Return Distribution section, the VaR(p) is just a p-quantile.
+                    More formally it is the "the loss on a trading portfolio such that there is a 
+                    probability p of losses equaling or exceeding VaR in a given trading period and a
+                    (1 - p) probability of losses being lower than the VaR." (Danielsson, 2011)'),
+                  p('This is very important. With this we can have perform risk management and see how much we
+                    are at risk to lose with a certain probability, and decide if it is worth it.
+                    Also, the VaR(p) when violated, when we have a loss greater than VaR(p), it is a sign that trouble is coming.
+                    That loss was not expected and something strange has happended.
+                    Also, we can forecast VaR(p), and be prepared for the following day.
+                    As you can see, there are many application to VaR(p).'),
+                  p('Being it so, the actual VaR can be modelled as so (Danielsson, 2011):'),
+                  p('$$ VaR(p) = -\\sigma * F^{-1}_{R}(p) $$'),
+                  p('Where sigma is the volatility or standard-deviation and F is the cumulative distribution
+                    function for the returns, or the quantile-function for the returns.'),
+                  p('So, how could we model this quantile for our entire series and forecast it one-step ahead?'),
+                  p('We will use the GARCH or econometric approach.
+                    With the GARCH model we can have the volatility for every step (every day).
+                    Also through assumption we have the returns distribution by the GARCH,
+                    which will remain the same only the sigma varying with each step.'),
+                  p('Having the VaR(p) of each step, we just need to scale it to the price.'),
+                  p('$$ VaR(p)_t = -\\sigma_t * F^{-1}_{R}(p) * P_{t-1}$$')
+                  
+              )
+            ),
+            
+            fluidRow(
+              box(h3('Expected Shortfall (p) [ ES(p) ]'))
+            ),
+            
+            fluidRow(
+              box(width = 12,
+                  
+                  p('As already stated in the Percentual Return Distribution, ES(p) is the mean of returns
+                    that are equal or lower than the VaR(p). It is the expected value of a return when it is lower than VaR(p).
+                    As we got a deeper understanding of the VaR(p)
+                    in the above section, we can see that ES(p) is a very powerful tool too.'),
+                  p('It captures what is best about VaR(p),
+                  the hability to describe the quantity and uncertainty envolved in losing money. 
+                  But, it does so with more precision than VaR(p), because it is the expected value of such loss,
+                    not a exact value of VaR(p), which has zero chance of happening exactly in a multitude of numbers close to it.')
+              )
+            ),
+            
+            fluidRow(
+              box(h3('Modified Sharpe Ratio'))
+            ),
+            
+            fluidRow(
+              box(width = 12,
+                  
+                  p('As we have learned about VaR(p) and ES(p),
+                    why not use those powerful tools to measure risk much more precisely
+                    than the actual volatility? That which changes in every step and will change in the future.'),
+                  p('We will define the new Sharpe Ratio as:'),
+                  p('$$ \\frac{R_t}{VaR(p)_t} $$')
+              )
+            ),
+            
+            fluidRow(
+              box(h3('References'))
+            ),
+            
+            fluidRow(
+              box(width = 12,
+                  
+                  p('The techniques here presented are very well accepted by
+                    the scientific and financial community.'),
+                  p('There are two books that were critical to this app, but there are many others in those topics. They are:'),
+                  em('Reproducible Finance with R: Code flows and Shiny Apps for Portfolio Analysis (Regenstein, 2018).'),
+                  p(),
+                  em('Financial Risk Forecasting (Danielsson, 2011)')
+                  
+              )
+            ),
+            
     ),
     ##################### Descriptive Section #####################
     tabItem(tabName = "stats",
@@ -160,9 +242,11 @@ body <- dashboardBody(
             ################## ********************  Portfolio Overview #################
             # Intro
             fluidRow(
-              box(h3('Portfolio Overview'),
-                  p('For a weekly update or the start of a in-depth study, both for descriptive or modelling.'),
-                  )
+              box(
+                h3('Portfolio Overview'),
+                p('For a weekly update or the start of a in-depth study, both for descriptive or modelling.'),
+                p('Data will be taken from Yahoo Finance, so please follow the same symbol that Yahoo uses.')
+              )
             ),
             
             fluidRow(
@@ -171,7 +255,7 @@ body <- dashboardBody(
                   solidHeader = TRUE, status = 'primary',
                   textAreaInput('port_csv',
                                 height = '150px',
-                                'Enter in the CSV format here',
+                                'Enter in the CSV format here (data taken from Yahoo Finance)',
                                 value = 'Stock,Weight,\nAAPL,0.25,\nAMZN,0.25,\nTSLA,0.25,\nSQ,0.25,'),
                   #helpText('Or, upload your own CSV below:'),
                   #fileInput('port_csv_upload'),
@@ -314,11 +398,11 @@ body <- dashboardBody(
             
             fluidRow(
               # Diagnostics of the model
-              box(title = 'Model Diagnostics: Theoretical vs. Empirical Distribution', width = 6,
+              box(title = 'GARCH Diagnostics: Theoretical vs. Empirical Distribution', width = 6,
                   plotOutput('model_diag_hist')
               ),
               
-              box(title = 'Is it serially independent?', width = 6,
+              box(title = 'GARCH Diagnostics: Serially independent?', width = 6,
                   DTOutput('ljung-box'))
               
             ),
