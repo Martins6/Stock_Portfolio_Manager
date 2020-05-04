@@ -154,14 +154,17 @@ server <- function(input, output) {
     
     aux %>% 
       mutate(Stocks = factor(Stocks, levels = aux$Stocks)) %>% 
+      mutate(Growth = round(Growth, 4)) %>% 
       ggplot() +
       geom_bar(aes(x = Stocks, y = Growth),
                stat="identity", width=.5, fill="tomato3") +
       scale_y_continuous(labels = scales::percent) +
       labs(title="", 
            y = 'Growth',
+           x = '',
            caption="source: Yahoo Finance") + 
-      coord_flip()
+      coord_flip() +
+      theme_minimal()
     
   })
   
@@ -176,7 +179,8 @@ server <- function(input, output) {
     
     aux %>% 
       ggplot(aes(x = Data, y = Price)) +
-      geom_path(aes(colour = Stocks))
+      geom_path(aes(colour = Stocks)) +
+      theme_bw()
     
     
   })
@@ -186,7 +190,8 @@ server <- function(input, output) {
     
     aux <- port.pret.cr() %>% 
       ggplot(aes(x = Data, y = CR)) +
-      geom_path(aes(colour = Stocks))
+      geom_path(aes(colour = Stocks)) +
+      theme_bw()
     
   })
   ########################### Classical Sharpe Ratio and CAPM ######################
@@ -225,17 +230,24 @@ server <- function(input, output) {
     # Plotting both data
     res <- ggplot() +
       geom_path(data = port,
-                aes(x = Data, y = PortSharpeRatio), colour = 'red') +
+                aes(x = Data, y = PortSharpeRatio), colour = 'red') + 
+      geom_point(data = port,
+                 aes(x = Data, y = PortSharpeRatio), colour = 'red') +
       geom_path(data = market,
                 aes(x = Data, y = MarketSharpeRatio), colour = 'blue') +
-      labs(title = 'Market vs. Portfolio')
+      geom_point(data = market,
+                 aes(x = Data, y = MarketSharpeRatio), colour = 'blue') +
+      labs(title = 'Market vs. Portfolio',
+           y = 'Sharpe Ratio',
+           x = 'Date') +
+      theme_bw()
       
     res %>% ggplotly()
     
   })
   
   ########################### ********** CAPM Plot ################################
-  output$market_portfolio_CAPM <- renderPlotly({
+  output$market_portfolio_CAPM <- renderPlot({
     
     port <- port.pret.cr() %>% drop_na() %>% filter(Stocks == 'Portfolio')
     market <- market_index_return() %>% drop_na()
@@ -257,7 +269,10 @@ server <- function(input, output) {
     aux %>% 
       ggplot(aes(x = M.PRet, y = P.PRet)) +
       geom_point() +
-      geom_abline(slope = fit.coef[2], intercept = fit.coef[1], colour = 'purple')
+      geom_abline(slope = fit.coef[2], intercept = fit.coef[1], colour = 'purple') +
+      labs(x = 'Market Percentual Returns',
+           y = 'Portfolio Percentual Returns') +
+      theme_minimal()
     
   })
   
@@ -356,8 +371,8 @@ server <- function(input, output) {
     kurt <- PerformanceAnalytics::kurtosis(port$PRet) %>% round(4) 
     Mu <- mean(port$PRet) %>% round(4)
     
-    res <- tibble(Statistic = c('Mean', 'Volatility', 'Value-at-Risk (5%)',
-                                'Expected Shortfall (5%)', 'Skewness Coef.', 'Kurtosis Coef.'),
+    res <- tibble(Statistic = c('Mean', 'Volatility', 'Historical Value-at-Risk (5%)',
+                                'Historical Expected Shortfall (5%)', 'Skewness Coef.', 'Kurtosis Coef.'),
                   Value = c(Mu, aux, skew, kurt))
     
     res %>% datatable()
@@ -786,7 +801,7 @@ server <- function(input, output) {
                            cond.dist = "norm", trace = FALSE)
       
       Vol_vec <- g %>% fBasics::volatility()
-      VaR_vec <- Vol_vec * qnorm(p)
+      VaR_vec <- -Vol_vec * qnorm(p)
     }
     if(garch.config == 't-GARCH'){
       
@@ -810,7 +825,7 @@ server <- function(input, output) {
       
       # # Compute the fitted standard deviation series
       Vol_vec <- g %>% fBasics::volatility()
-      VaR_vec <- Vol_vec * q
+      VaR_vec <- -Vol_vec * q
     }
     
     # Adjusting the dataframe to time window selected
@@ -833,11 +848,18 @@ server <- function(input, output) {
     
     # Plotting both data
     res <- ggplot() +
+      # Portfolio
       geom_path(data = port,
                 aes(x = Data, y = PortSharpeRatio), colour = 'red') +
+      geom_point(data = port,
+                 aes(x = Data, y = PortSharpeRatio), colour = 'red') +
+      # Market
       geom_path(data = market,
                 aes(x = Data, y = MarketSharpeRatio), colour = 'blue') +
-      labs(title = 'Market vs. Portfolio')
+      geom_point(data = market,
+                 aes(x = Data, y = MarketSharpeRatio), colour = 'blue') +
+      labs(title = 'Market vs. Portfolio') +
+      theme_bw()
     
     res <- res %>% ggplotly()
     return(res)

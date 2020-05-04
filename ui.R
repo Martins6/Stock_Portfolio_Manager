@@ -124,7 +124,7 @@ body <- dashboardBody(
             fluidRow(
               # CAPM 
               box(title = 'Capital Asset Pricing Model (CAPM)', width = 12,
-                  plotlyOutput('market_portfolio_CAPM')
+                  plotOutput('market_portfolio_CAPM')
               )
             ),
             
