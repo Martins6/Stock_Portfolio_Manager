@@ -10,9 +10,6 @@ library(tidyselect)
 library(lubridate)
 ## Plotting
 library(plotly)
-library(ggthemes)
-library(ggpubr)
-library(hrbrthemes)
 
 # Source functions
 source('functions_app.R')

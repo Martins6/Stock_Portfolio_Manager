@@ -3,6 +3,31 @@ stock_prices <- function(stocks, start.date){
   
   symbols <- stocks
   
+  # In the very specific case of the brazillian market index ^BVSP on the Yahoo Finance.
+  if(length(symbols) == 1 & symbols == '^BVSP'){
+    # Get the data from Yahoo Finance, we will be working the names of the objects
+    quantmod::getSymbols(symbols, src = 'yahoo', from = start.date,
+                         auto.assign = TRUE, warnings = FALSE) 
+    
+    prices <- BVSP %>% quantmod::Ad()
+    
+    # If it has missing values, use inputation of values
+    if(sum(is.na(prices)) != 0){
+      prices <- prices %>%
+        zoo::na.approx()
+    }
+    
+    # Collecting the vector of dates from the xts object.
+    Data <- prices %>% zoo::index() %>% lubridate::date()
+    # Trasnforming from xts to tibble.
+    prices <- prices %>% 
+      as_tibble(.name_repair = 'unique') %>%
+      `colnames<-`('Market') %>%
+      mutate_all(~as.vector(.)) %>% 
+      mutate(Data = Data) %>%
+      drop_na()
+    
+  }else{
   # Constructing our Adjusted.Close dataframe with each Stock.
   prices <- 
     # Get the data from Yahoo Finance, we will be working the names of the objects
@@ -11,6 +36,12 @@ stock_prices <- function(stocks, start.date){
     # Acessing the xts objects throught the vector of names (get) and getting
     # the the Adjusted.Close (Ad) of each object
     map(~quantmod::Ad(get(.)))
+  
+  # If it has missing values, use inputation of values
+  if(sum(is.na(prices)) != 0){
+    prices <- prices %>%
+      zoo::na.approx()
+  }
   
   # Collecting the vector of dates from the xts object.
   Data <- prices[[1]] %>% zoo::index()
@@ -21,6 +52,7 @@ stock_prices <- function(stocks, start.date){
     mutate_all(~as.vector(.)) %>% 
     mutate(Data = Data) %>%
     drop_na()
+  }
   
   
   return(prices)

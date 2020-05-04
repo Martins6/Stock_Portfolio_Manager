@@ -78,11 +78,24 @@ server <- function(input, output) {
     
     aux <- stock_prices(symbols, aux_date)
     
-   res <- aux %>% 
-     rename(Market = any_of(symbols)) %>% 
-     mutate(PRet = if_else(Market != 0, 
-                           ( Market - lag(Market) ) / lag(Market),
-                           NA_real_))
+    # In the very especif case of the Brazillian Index Market ^BVSP
+    if(length(symbols) == 1 & symbols == '^BVSP'){
+      
+      res <- aux %>% 
+        mutate(PRet = if_else(Market != 0, 
+                              ( Market - lag(Market) ) / lag(Market),
+                              NA_real_))
+      
+    }else{
+      
+      res <- aux %>% 
+        rename(Market = any_of(symbols)) %>% 
+        mutate(PRet = if_else(Market != 0, 
+                              ( Market - lag(Market) ) / lag(Market),
+                              NA_real_))
+    }
+    
+
     
     return(res)
     
@@ -106,11 +119,24 @@ server <- function(input, output) {
     
     aux <- stock_prices(symbols, aux_date)
     
-    res <- aux %>% 
-      rename(Market = any_of(symbols)) %>% 
-      mutate(PRet = if_else(Market != 0, 
-                            ( Market - lag(Market) ) / lag(Market),
-                            NA_real_))
+    # In the very especif case of the Brazillian Index Market ^BVSP
+    if(length(symbols) == 1 & symbols == '^BVSP'){
+      
+      res <- aux %>% 
+        mutate(PRet = if_else(Market != 0, 
+                              ( Market - lag(Market) ) / lag(Market),
+                              NA_real_))
+      
+    }else{
+      
+      res <- aux %>% 
+        rename(Market = any_of(symbols)) %>% 
+        mutate(PRet = if_else(Market != 0, 
+                              ( Market - lag(Market) ) / lag(Market),
+                              NA_real_))
+    }
+    
+    
     
     return(res)
     
@@ -175,14 +201,12 @@ server <- function(input, output) {
     
     aux <- port.prices() %>% 
       pivot_longer(cols = any_of(symbols), names_to = 'Stocks', values_to = 'Price')
-    
-    
+
     aux %>% 
       ggplot(aes(x = Data, y = Price)) +
       geom_path(aes(colour = Stocks)) +
       theme_bw()
-    
-    
+
   })
   
   ########################### ********** Historical Cumulative Return #############
@@ -249,17 +273,12 @@ server <- function(input, output) {
   ########################### ********** CAPM Plot ################################
   output$market_portfolio_CAPM <- renderPlot({
     
-    port <- port.pret.cr() %>% drop_na() %>% filter(Stocks == 'Portfolio')
-    market <- market_index_return() %>% drop_na()
-
-    aux <- port %>%
-      # Adding the market returns to the portfolio data
-      mutate(M.PRet = market$PRet) %>%
-      # Changing the name of the portfolio returns
-      rename(P.PRet = PRet) %>% 
-      # Choosing just what we want
-      select(P.PRet, M.PRet)
+    port <- port.pret.cr() %>% drop_na() %>% filter(Stocks == 'Portfolio') %>% rename(P.PRet = PRet)
+    market <- market_index_return() %>% drop_na() %>% rename(M.PRet = PRet)
     
+    aux <- inner_join(port, market) %>% 
+      select(P.PRet, M.PRet)
+
     # Adjusting the linear regression
     fit <- lm(aux, formula = P.PRet ~ M.PRet)
     # Extracting coefficients
@@ -267,6 +286,7 @@ server <- function(input, output) {
     
     # Plotting
     aux %>% 
+      drop_na() %>% 
       ggplot(aes(x = M.PRet, y = P.PRet)) +
       geom_point() +
       geom_abline(slope = fit.coef[2], intercept = fit.coef[1], colour = 'purple') +
@@ -279,47 +299,39 @@ server <- function(input, output) {
   ########################### ********** CAPM Beta ################################
   output$capm_beta <- renderValueBox({
     
-    port <- port.pret.cr() %>% drop_na() %>% filter(Stocks == 'Portfolio')
-    market <- market_index_return() %>% drop_na()
+    port <- port.pret.cr() %>% drop_na() %>% filter(Stocks == 'Portfolio') %>% rename(P.PRet = PRet)
+    market <- market_index_return() %>% drop_na() %>% rename(M.PRet = PRet)
     
-    aux <- port %>%
-      # Adding the market returns to the portfolio data
-      mutate(M.PRet = market$PRet) %>%
-      # Changing the name of the portfolio returns
-      rename(P.PRet = PRet) %>% 
-      # Choosing just what we want
+    aux <- inner_join(port, market) %>% 
       select(P.PRet, M.PRet)
     
     # Adjusting the linear regression
     fit <- lm(aux, formula = P.PRet ~ M.PRet)
     # Extracting coefficients
-    fit.coef <- coef(fit)
+    fit.coef <- coef(fit) %>% as.double()
     
     valueBox(round(fit.coef[2], 2),
-             subtitle = 'CAPM Beta',icon = icon('chart-line') )
+             subtitle = 'CAPM Beta',
+             icon = icon('chart-line') )
     
   })
   
   ########################### ********** CAPM Alpha ################################
   output$capm_alpha <- renderValueBox({
     
-    port <- port.pret.cr() %>% drop_na() %>% filter(Stocks == 'Portfolio')
-    market <- market_index_return() %>% drop_na()
+    port <- port.pret.cr() %>% drop_na() %>% filter(Stocks == 'Portfolio') %>% rename(P.PRet = PRet)
+    market <- market_index_return() %>% drop_na() %>% rename(M.PRet = PRet)
     
-    aux <- port %>%
-      # Adding the market returns to the portfolio data
-      mutate(M.PRet = market$PRet) %>%
-      # Changing the name of the portfolio returns
-      rename(P.PRet = PRet) %>% 
-      # Choosing just what we want
+    aux <- inner_join(port, market) %>% 
       select(P.PRet, M.PRet)
+    
     
     # Adjusting the linear regression
     fit <- lm(aux, formula = P.PRet ~ M.PRet)
     # Extracting coefficients
-    fit.coef <- coef(fit)
+    fit.coef <- coef(fit) %>% as.double() %>% round(3)
     
-    valueBox(round(fit.coef[1],4),
+    valueBox(fit.coef[1],
              subtitle = 'CAPM Alpha',
              color = 'maroon',
              icon = icon('not-equal'))
@@ -448,6 +460,8 @@ server <- function(input, output) {
                                          `VaR Forecast` = 'darkred',
                                          `ES Forecast` =  'darkblue')) +
           labs(title = 'Model Results',
+               y = 'Returns (%)',
+               x = 'Date',
                caption = 'source: Yahoo Finance') +
           theme_bw()
         
@@ -502,6 +516,8 @@ server <- function(input, output) {
                               values = c(`Value-at-Risk` = 'red',
                                          `VaR Forecast` = 'darkred')) +
           labs(title = 'Model Results',
+               y = 'Returns (%)',
+               x = 'Date',
                caption = 'source: Yahoo Finance') +
           theme_bw()
         
@@ -557,18 +573,19 @@ server <- function(input, output) {
         # Adding our model to the data matrix
         mutate(price = price.vec,
                LaggedPrice = lag.price.vec,
-               VaR = VaR_vec * LaggedPrice,
-               ES = ES_vec * LaggedPrice,
-               VaR_price = price + VaR,
-               ES_price = price + ES) %>% 
+               VaR1 = VaR_vec * LaggedPrice,
+               ES1 = ES_vec * LaggedPrice,
+               VaR = price + VaR1,
+               ES = price + ES1,
+               `Upper Bound Confidence Interval` = price + (price - VaR)) %>% 
         drop_na() %>% 
         ggplot(aes(x = Data)) +
         geom_path(aes(y = price)) +
-        geom_path(aes(y = VaR_price, colour = 'Value-at-Risk')) +
-        geom_ribbon(aes(ymin = VaR_price,
-                        ymax = price + (price - VaR_price),
+        geom_path(aes(y = VaR, colour = 'Value-at-Risk')) +
+        geom_ribbon(aes(ymin = VaR,
+                        ymax = `Upper Bound Confidence Interval`,
                         alpha = 0.3), fill = 'purple') +
-        geom_path(aes(y = ES_price, colour = 'Expected-Shortfall')) +
+        geom_path(aes(y = ES, colour = 'Expected-Shortfall')) +
         geom_point(aes(x = `Date Forecast`, y = VaR_forecast_price, colour = 'VaR Forecast')) +
         geom_point(aes(x = `Date Forecast`, y = ES_forecast_price, colour = 'ES Forecast')) +
         scale_colour_manual(name = '',
@@ -578,6 +595,8 @@ server <- function(input, output) {
                                        `ES Forecast` =  'darkblue',
                                        Volatility = 'purple')) +
         labs(title = 'Model Results',
+             y = 'Price',
+             x = 'Date',
              caption = 'source: Yahoo Finance') +
         theme_bw()
       
@@ -643,6 +662,8 @@ server <- function(input, output) {
                             values = c(`Value-at-Risk` = 'red',
                                        `VaR Forecast` = 'darkred')) +
         labs(title = 'Model Results',
+             y = 'Price',
+             x = 'Date',
              caption = 'source: Yahoo Finance') +
         theme_bw()
       
@@ -866,7 +887,7 @@ server <- function(input, output) {
     # Market M. Sharpe Ratio
     market <- market_index_return_model() %>% drop_na()
     # Portfolio M. Sharpe Ratio
-    port <- port.pret.cr() %>% filter(Stocks == 'Portfolio')
+    port <- port.pret.cr() %>% filter(Stocks == 'Portfolio') %>% drop_na()
     
     # Quantile that we wish
     p <- p.val.risk()
@@ -874,14 +895,24 @@ server <- function(input, output) {
     garch.config <- input$garch_selection
     
     if(garch.config == 'N-GARCH'){
+      # Port VaR
       g = fGarch::garchFit(~garch(1,1), port$PRet,
                            cond.dist = "norm", trace = FALSE)
       
       Vol_vec <- g %>% fBasics::volatility()
-      VaR_vec <- -Vol_vec * qnorm(p)
+      VaR_vec.port <- -Vol_vec * qnorm(p)
+      
+      # Market VaR
+      g = fGarch::garchFit(~garch(1,1), market$PRet,
+                           cond.dist = "norm", trace = FALSE)
+      
+      Vol_vec <- g %>% fBasics::volatility()
+      VaR_vec.mark <- -Vol_vec * qnorm(p)
+      
     }
     if(garch.config == 't-GARCH'){
       
+      # Port VaR
       g = fGarch::garchFit(~garch(1,1), port$PRet,
                            cond.dist = "std", trace = FALSE)
       
@@ -902,27 +933,53 @@ server <- function(input, output) {
       
       # # Compute the fitted standard deviation series
       Vol_vec <- g %>% fBasics::volatility()
-      VaR_vec <- -Vol_vec * q
+      VaR_vec.port <- -Vol_vec * q
+      
+      # Market VaR
+      g = fGarch::garchFit(~garch(1,1), market$PRet,
+                           cond.dist = "std", trace = FALSE)
+      
+      # Computing the white noise from the schock from the GARCH(1,1)
+      # If our model is right it is supposed to
+      # follow the distribution from the 'cond.dist' in garchFit
+      epsilon.t <- (g@residuals/g@sigma.t)
+      
+      # Estimating the distribution of the shocks.
+      tstud.fit <- MASS::fitdistr(epsilon.t, 't')
+      mu.tstud <- tstud.fit$estimate[1]
+      sigma.tstud <- tstud.fit$estimate[2]
+      df.tstud <- tstud.fit$estimate[3]
+      # Which should follow a t-student with 'df.tstud'.
+      standard.epsilon.t <- (epsilon.t - mu.tstud ) / sigma.tstud
+      # Finding the quantile of the t-stud
+      q <- fGarch::qstd(p, nu = df.tstud)
+      
+      # # Compute the fitted standard deviation series
+      Vol_vec <- g %>% fBasics::volatility()
+      VaR_vec.mark <- -Vol_vec * q
     }
     
     # Adjusting the dataframe to time window selected
     if(!is.null(aux_data)){
+      
+      
       port <- port %>% 
-        mutate(PortSharpeRatio = round(PRet/VaR_vec, 4)) %>% 
+        mutate(PortSharpeRatio = round(PRet/VaR_vec.port, 4)) %>% 
         slice(( n()-aux_data ):n() )
       
       market <- market %>% 
-        mutate(MarketSharpeRatio = round(PRet/VaR_vec, 4)) %>% 
+        mutate(MarketSharpeRatio = round(PRet/VaR_vec.mark, 4)) %>% 
         slice(( n()-aux_data ):n() )
       
     }else{
       port <- port %>% 
-        mutate(PortSharpeRatio = round(PRet/VaR_vec, 4))
+        mutate(PortSharpeRatio = round(PRet/VaR_vec.port, 4))
       
       market <- market %>% 
-        mutate(MarketSharpeRatio = round(PRet/VaR_vec, 4)) 
+        mutate(MarketSharpeRatio = round(PRet/VaR_vec.mark, 4)) 
     }
     
+    print('hello')
     # Plotting both data
     res <- ggplot() +
       # Portfolio

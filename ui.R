@@ -26,7 +26,9 @@ body <- dashboardBody(
                   
                   p('"Shiny Portfolio Management" was created to help with the more quantitative understanding of stocks'),
                   p('and also apply the most used and modern techniques to stock portfolio. Hope you enjoy!'),
+                  p('If you wish to contribute checkout the Github https://github.com/Martins6/Portfolio_Manager and create a pull request!'),
                   p('The app was created by Adriel Martins.'),
+                  
                   p('In this tab I will try to explain some of the key statistics of the app.'),
 
                   )
@@ -336,10 +338,11 @@ body <- dashboardBody(
             ),
             
             fluidRow(
-              # CAPM Beta 
-              valueBoxOutput('capm_beta', width = 6),
               # CAPM Alpha
-              valueBoxOutput('capm_alpha', width = 6)
+              valueBoxOutput('capm_alpha', width = 6),
+              # CAPM Beta 
+              valueBoxOutput('capm_beta', width = 6)
+              
             )
             
      # End of the Descriptive Section       
