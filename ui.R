@@ -1,5 +1,5 @@
 ########################### / HEADER / #################################
-header <- dashboardHeader(title = "Portfolio Risk Management")
+header <- dashboardHeader(title = "Stock Portfolio Risk Manager", titleWidth = '300px')
 
 ########################## / SIDEBAR / #################################
 sidebar <- dashboardSidebar(
