@@ -577,13 +577,13 @@ server <- function(input, output) {
                ES1 = ES_vec * LaggedPrice,
                VaR = price + VaR1,
                ES = price + ES1,
-               `Upper Bound Confidence Interval` = price + (price - VaR)) %>% 
+               `Upper Bound CI` = price + (price - VaR)) %>% 
         drop_na() %>% 
         ggplot(aes(x = Data)) +
         geom_path(aes(y = price)) +
         geom_path(aes(y = VaR, colour = 'Value-at-Risk')) +
         geom_ribbon(aes(ymin = VaR,
-                        ymax = `Upper Bound Confidence Interval`,
+                        ymax = `Upper Bound CI`,
                         alpha = 0.3), fill = 'purple') +
         geom_path(aes(y = ES, colour = 'Expected-Shortfall')) +
         geom_point(aes(x = `Date Forecast`, y = VaR_forecast_price, colour = 'VaR Forecast')) +
@@ -648,14 +648,15 @@ server <- function(input, output) {
         # Adding our model to the data matrix
         mutate(price = price.vec,
                LaggedPrice = lag.price.vec,
-               VaR = VaR_vec * LaggedPrice,
-               VaR_price = price + VaR) %>% 
+               VaR_value = VaR_vec * LaggedPrice,
+               VaR = price + VaR_value,
+               `Upper Bound CI` = price + (price - VaR)) %>% 
         drop_na() %>% 
         ggplot(aes(x = Data)) +
         geom_path(aes(y = price)) +
-        geom_path(aes(y = VaR_price, colour = 'Value-at-Risk')) +
-        geom_ribbon(aes(ymin = VaR_price,
-                        ymax = price + (price - VaR_price),
+        geom_path(aes(y = VaR, colour = 'Value-at-Risk')) +
+        geom_ribbon(aes(ymin = VaR,
+                        ymax = `Upper Bound CI`,
                         alpha = 0.3), fill = 'purple') +
         geom_point(aes(x = `Date Forecast`, y = VaR_forecast_price, colour = 'VaR Forecast')) +
         scale_colour_manual(name = '',
