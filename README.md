@@ -26,7 +26,7 @@ Please, notice that the stock inputs are following the symbols of the Yahoo Fina
 
 ## Contributing
 
-There is an empty folder called 'contributions'. This folder is meant for those that wish to contribute to some quantitative statistical tool to stock portfolio analysis but doesn't have the knowledge of Shiny. You can leave a reproducible example script in the folder and we will convert it to fit on the app.
+There is an empty folder called 'contributions'. This folder is meant for those that wish to contribute to some quantitative statistical tool to stock portfolio analysis but doesn't have the knowledge of Shiny. You can leave a reproducible example R script in the folder and the contributors will convert it to fit in the app.
 
 Otherwise, feel free to tweak and improve however you want! Remember that the main goal is to build a open-source app for quantitative stock analysis.
 
@@ -39,6 +39,10 @@ Here are some ideas for the future:
 * Improve the CSS, or the design of the app.
 * Implement Markowitz Analysis.
 * Incorporate some kind of database so that we can have user accounts in order to save user preferences.
+
+## Acknowledgments
+
+This app is from the R community to the R community (but not only). All the packages that made the app were free and open-source, that is amazing and I'm very thankful. Also, I would like to highlight the book "Reproducible Finance with R" made by Jonathan K. Regenstein. That book was the first inspiration to build this app.
 
 ## License
 [GPL - 3.0](https://choosealicense.com/licenses/gpl-3.0/)
