@@ -32,5 +32,13 @@ Otherwise, feel free to tweak and improve however you want! Remember that the ma
 
 Pull requests are very much welcome! For major changes, please open an issue first to discuss what you would like to change.
 
+## Future Improvements
+
+Here are some ideas for the future:
+
+* Improve the CSS, or the design of the app.
+* Implement Markowitz Analysis.
+* Incorporate some kind of database so that we can have user accounts in order to save user preferences.
+
 ## License
 [GPL - 3.0](https://choosealicense.com/licenses/gpl-3.0/)
