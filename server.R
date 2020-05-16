@@ -583,8 +583,7 @@ server <- function(input, output) {
         geom_path(aes(y = price)) +
         geom_path(aes(y = VaR, colour = 'Value-at-Risk')) +
         geom_ribbon(aes(ymin = VaR,
-                        ymax = `Upper Bound CI`,
-                        alpha = 0.3), fill = 'purple') +
+                        ymax = `Upper Bound CI`), alpha = 0.3, fill = 'purple') +
         geom_path(aes(y = ES, colour = 'Expected-Shortfall')) +
         geom_point(aes(x = `Date Forecast`, y = VaR_forecast_price, colour = 'VaR Forecast')) +
         geom_point(aes(x = `Date Forecast`, y = ES_forecast_price, colour = 'ES Forecast')) +
@@ -656,8 +655,7 @@ server <- function(input, output) {
         geom_path(aes(y = price)) +
         geom_path(aes(y = VaR, colour = 'Value-at-Risk')) +
         geom_ribbon(aes(ymin = VaR,
-                        ymax = `Upper Bound CI`,
-                        alpha = 0.3), fill = 'purple') +
+                        ymax = `Upper Bound CI`), alpha = 0.3, fill = 'purple') +
         geom_point(aes(x = `Date Forecast`, y = VaR_forecast_price, colour = 'VaR Forecast')) +
         scale_colour_manual(name = '',
                             values = c(`Value-at-Risk` = 'red',
