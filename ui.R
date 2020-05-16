@@ -17,12 +17,12 @@ body <- dashboardBody(
     tabItem(tabName = "about",
             
             fluidRow(
-              box(h1('About Section')),
+              box(h1('About Section'), width = 4),
               withMathJax()
             ),
             
             fluidRow(
-              box(width = 10,
+              box(width = 12, 
                   
                   p('"Shiny Portfolio Management" was created to provide a better quantitative stocks analysis 
                     and also present some of the most used and modern techniques on risk management in stock portfolio. Hope you enjoy!'),
@@ -41,11 +41,11 @@ body <- dashboardBody(
             ),
             
             fluidRow(
-              box(h3('Cumulative Returns'))
+              box(h3('Cumulative Returns'), width = 4)
             ),
             
             fluidRow(
-              box(width = 10,
+              box(width = 12,
                   
                   p('In essence it means "How much did one unit of currency became over this period of time?".
                     Did it become more or less than one unit? If we were trading in America: "How much is the one dollar spent in the beginning compared to now?"'),
@@ -55,11 +55,11 @@ body <- dashboardBody(
             ),
             
             fluidRow(
-              box(h3('Classical Sharpe Ratio'))
+              box(h3('Classical Sharpe Ratio'), width = 4)
             ),
             
             fluidRow(
-              box(width = 10,
+              box(width = 12,
                   
                   p('The aim is to understand daily portfolio\'s return over volatility which means to interpret if the return obtained really compensated the risk taken.
                   This tool is especially good to compare point returns, for instance: "Is today’s return better than the market\'s?".'),
@@ -72,11 +72,11 @@ body <- dashboardBody(
             ),
             
             fluidRow(
-              box(h3('Capital Asset Pricing Model (CAPM)'))
+              box(h3('Capital Asset Pricing Model (CAPM)'), width = 4)
             ),
             
             fluidRow(
-              box(width = 10,
+              box(width = 12,
                   
                   
                   p('It is crucial to understand the Portfolio\'s Return expected value explained by the Market\'s
@@ -99,11 +99,11 @@ body <- dashboardBody(
             ),
             
             fluidRow(
-              box(h3('Return Distribution Properties'))
+              box(h3('Return Distribution Properties'), width = 4)
             ),
             
             fluidRow(
-              box(width = 10,
+              box(width = 12,
                   
                   
                   p('It is useful to bear in mind that the current distribution return is just a snap photo, a sample distribution.
@@ -138,11 +138,11 @@ body <- dashboardBody(
             ),
             
             fluidRow(
-              box(h3('GARCH Model'))
+              box(h3('GARCH Model'), width = 4)
             ),
             
             fluidRow(
-              box(width = 10,
+              box(width = 12,
                   
                   p('GARCH stands for Generalized Auto Regressive Conditional Heteroscedasticity.
                   It means the attempt to model the actual volatility (standard-deviation) through past squared returns and volatilities.
@@ -173,11 +173,11 @@ body <- dashboardBody(
             ),
             
             fluidRow(
-              box(h3('Value-at-Risk(p) (VaR(p))'))
+              box(h3('Value-at-Risk(p) ( VaR(p) )'), width = 4)
             ),
             
             fluidRow(
-              box(width = 10,
+              box(width = 12,
                   
                   p('Like it was said in the Percentual Return Distribution section, the VaR(p) is just a p-quantile.
                     More formally it is the "the loss on a trading portfolio such that there is a 
@@ -205,11 +205,11 @@ body <- dashboardBody(
             ),
             
             fluidRow(
-              box(h3('Expected Shortfall (p) (ES(p))'))
+              box(h3('Expected Shortfall (p) ( ES(p) )'), width = 4)
             ),
             
             fluidRow(
-              box(width = 10,
+              box(width = 12,
                   
                   p('As already stated in the Percentual Return Distribution, ES(p) is the mean of returns
                     that are equal or lower than the VaR(p). It is the expected value of a return when it is lower than VaR(p).
@@ -223,26 +223,26 @@ body <- dashboardBody(
             ),
             
             fluidRow(
-              box(h3('Modified Sharpe Ratio'))
+              box(h3('Modified Sharpe Ratio'), width = 4)
             ),
             
             fluidRow(
-              box(width = 10,
+              box(width = 12,
                   
                   p('As it was learned about VaR(p) and ES(p),
                     why not use those powerful tools to measure risk much more precisely
                     than just the actual volatility?'),
                   p('The new Sharpe Ratio is definied as:'),
-                  p('$$ \\frac{PR_t}{VaR(p)_t} $$')
+                  p('$$ SR_t = \\frac{PR_t}{VaR(p)_t} $$')
               )
             ),
             
             fluidRow(
-              box(h3('References'))
+              box(h3('References'), width = 4)
             ),
             
             fluidRow(
-              box(width = 10,
+              box(width = 12,
                   
                   p('The techniques here presented are very well accepted by
                     the scientific and financial community.'),

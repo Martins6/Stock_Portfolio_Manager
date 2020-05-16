@@ -5,9 +5,9 @@ account: adriel-martins
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1962487
-bundleId: 3154961
+bundleId: 3155019
 url: https://adriel-martins.shinyapps.io/Portfolio_Manager/
-when: 1589634801.02233
+when: 1589636533.43798
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: app.Rmd
