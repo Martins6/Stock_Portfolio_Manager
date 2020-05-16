@@ -1,4 +1,7 @@
 .Rproj.user
+.Rproj
 .Rhistory
 .RData
 .Ruserdata
+rsconnect/*
+rsconnect
