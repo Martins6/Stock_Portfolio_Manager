@@ -1,6 +1,6 @@
 # Stock Portfolio Risk Manager
 
-This is an Shiny app built with R to democratise the more in-depth quantiative study of price stocks. The main goal is to build an open-source Shiny app for quantitative stock analysis.
+This is an Shiny app built with R to democratise the more in-depth quantitative study of price stocks. The main goal is to build an open-source Shiny app for that study.
 
 ## Usage or installation
 
