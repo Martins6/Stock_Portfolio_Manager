@@ -979,7 +979,6 @@ server <- function(input, output) {
         mutate(MarketSharpeRatio = round(PRet/VaR_vec.mark, 4)) 
     }
     
-    print('hello')
     # Plotting both data
     res <- ggplot() +
       # Portfolio
