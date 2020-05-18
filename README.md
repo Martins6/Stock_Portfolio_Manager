@@ -26,9 +26,9 @@ Please, notice that the stock inputs are following the symbols of the Yahoo Fina
 
 ## Contributing
 
-There is an empty folder called 'contributions'. This folder is meant for those that wish to contribute to some quantitative statistical tool to stock portfolio analysis but doesn't have the knowledge of Shiny. You can leave a reproducible example R script in the folder and the contributors will convert it to fit in the app.
+For everyone that wish to contribute to some quantitative statistical tool to stock portfolio analysis but doesn't have the knowledge of Shiny, create an empty folder called 'contributions'. You can leave a reproducible example R script in the folder and the contributors will convert it to fit in the app.
 
-Otherwise, feel free to tweak and improve however you want! Remember that the main goal is to build a open-source app for quantitative stock analysis.
+Otherwise, feel free to tweak and improve the however you want! Remember that the main goal is to build a open-source app for quantitative stock analysis.
 
 Pull requests are very much welcome! For major changes, please open an issue first to discuss what you would like to change.
 
