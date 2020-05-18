@@ -286,7 +286,7 @@ body <- dashboardBody(
               box(
                 h3('Portfolio Overview'),
                 p('For a weekly update or the start of a in-depth study, both for descriptive or modelling.'),
-                p('Data will be taken from Yahoo Finance, so please follow the same symbol that Yahoo uses.')
+                p('Data will be taken from Yahoo Finance site.')
               )
             ),
             
