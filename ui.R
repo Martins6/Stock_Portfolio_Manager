@@ -41,6 +41,28 @@ body <- dashboardBody(
             ),
             
             fluidRow(
+              box(h3('Data Input'), width = 4)
+            ),
+            
+            fluidRow(
+              box(width = 12,
+                  
+                  p('Please, notice that the stock inputs are following the ticket symbols of the Yahoo Finance.
+                    You just have to enter on their site and check if the stock symbol is the one that you want,
+                    or just google it.
+                    Normally, for the american stock market the ticket symbol is the same.
+                    However for the brazillian market it always differ, as an other example.'),
+                  p('Take the large brazillian company called Weg.
+                    In the brazillian stock market the ticket symbol is WEGE3,
+                    however in the Yahoo Finance site, it is WEGE3.SA.
+                    Also, the index of the brazillian market is named ^BVSP, not the usual symbol which is IBOVESPA.'),
+                  p('Be careful in such differences.')
+                    
+              )
+            ),
+            
+            
+            fluidRow(
               box(h3('Cumulative Returns'), width = 4)
             ),
             
@@ -274,10 +296,9 @@ body <- dashboardBody(
                   solidHeader = TRUE, status = 'primary',
                   textAreaInput('port_csv',
                                 height = '150px',
-                                'Enter in the CSV format here (data taken from Yahoo Finance)',
-                                value = 'Stock,Weight,\nAAPL,0.25,\nAMZN,0.25,\nTSLA,0.25,\nSQ,0.25,'),
-                  #helpText('Or, upload your own CSV below:'),
-                  #fileInput('port_csv_upload'),
+                                'Enter in the CSV format here below.\n
+                                Please follow the Yahoo Finance ticket symbol, check the About section for better guidance.',
+                                value = 'Stock,Weight,\nGOOGL,0.25,\nAMZN,0.25,\nTSLA,0.25,\nSQ,0.25,')
               ),
               
               # Date
