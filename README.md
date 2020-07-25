@@ -34,11 +34,7 @@ Pull requests are very much welcome! For major changes, please open an issue fir
 
 ## Future Improvements
 
-Here are some ideas for the future:
-
-* Improve the CSS, or the design of the app.
-* Implement Markowitz Analysis.
-* Incorporate some kind of database so that we can have user accounts in order to save user preferences.
+Check the project area [here](https://github.com/Martins6/Stock_Portfolio_Manager/projects/1), in order to see the plans for the future.
 
 ## Acknowledgments
 
