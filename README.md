@@ -6,17 +6,7 @@ This is an Shiny app built with R to democratise the more in-depth risk-aware qu
 
 You can acess the app in the shinyapp.io platform with this [link](https://adriel-martins.shinyapps.io/Portfolio_Manager/?_ga=2.210384469.1377155949.1589635077-482263549.1556407394).
 
-But, if you wish to run in your own computer, you must have R software installed and the dependent packages. Those packages are on the script 'global.R'. Then, you must clone the git repository:
-
-```git
-git clone https://github.com/Martins6/Stock_Portfolio_Manager
-```
-Next you must set the working directory in R to the folder you just downloaded.
-
-```r
-setwd('path_to_the_folder')
-```
-Finally, run the "app.R" script.
+But, if you wish to run in your own computer, first clone this repository. Then, you must have R software installed and set the working directory as the folder that you downloaded. Finally, just run the file "app.R". It will automatically install the dependencies.
 
 ## In-App Flow and Input Details
 
