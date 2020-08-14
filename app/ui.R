@@ -6,6 +6,7 @@ sidebar <- dashboardSidebar(
   sidebarMenu(
     menuItem("Descriptive", tabName = "stats"),
     menuItem("Modelling", tabName = "model"),
+    menuItem('Optimization', tabName = 'optim'),
     menuItem("About", tabName = "about")
   )
 )
@@ -483,7 +484,25 @@ body <- dashboardBody(
             )  
             
       # End of the Modelling Section
+    ),
+    
+    #################################### Optimization Section #####################
+    tabItem(tabName = "optim",
+            
+            fluidRow(
+              box(title = 'Markowitz Optimization Frontier', width = 12,
+                  plotOutput('markw.optim')
+                  )
+            ),
+            
+            fluidRow(
+              box(title = 'Frontier Weights', width = 12,
+                  plotOutput('markw.frontier')
+                  )
+            )
+              
     )
+         
     # End of the tabitems
   )
   # End of the body

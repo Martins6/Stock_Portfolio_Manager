@@ -5,3 +5,5 @@
 .Ruserdata
 rsconnect/*
 rsconnect
+renv/*
+renv
