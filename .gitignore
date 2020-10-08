@@ -2,9 +2,7 @@
 .Rproj
 .Rhistory
 .RData
-.Rprofile
 .Ruserdata
 rsconnect/*
 rsconnect
-renv/*
-renv
+
