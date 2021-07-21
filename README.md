@@ -2,6 +2,8 @@
 
 This is an Shiny app built with R to democratise the more in-depth risk-aware quantitative study of price stocks. The main goal is to build an open-source Shiny app for that study.
 
+![Dashboard](images/example.png)
+
 ## Usage or installation
 
 You can acess the app in the shinyapp.io platform with this [link](https://adriel-martins.shinyapps.io/Portfolio_Manager/?_ga=2.210384469.1377155949.1589635077-482263549.1556407394).
